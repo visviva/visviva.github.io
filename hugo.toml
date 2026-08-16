@@ -1,0 +1,11 @@
+baseURL = 'https://example.org/'
+locale = 'en-us'
+title = 'My New Hugo Project'
+theme = 'paper'
+
+[params]
+github = 'visviva'
+name = 'Simon Lauser'
+bio = 'I am a software engineer and open source enthusiast.'
+monoDarkIcon = true
+math = true
