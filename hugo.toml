@@ -6,13 +6,13 @@ theme = 'paper'
 [params]
 github = 'visviva'
 name = 'Simon Lauser'
-bio = 'I am a software engineer and open source enthusiast.'
+bio = 'I am a software engineer. I like to write about stuff that I do and find interesting.'
 monoDarkIcon = true
 math = true
 
 [menu]
-  [[menu.main]]
-    identifier = 'about'
-    name = 'About'
-    url = '/about/'
-    weight = 10
+[[menu.main]]
+identifier = 'about'
+name = 'About'
+url = '/about/'
+weight = 10

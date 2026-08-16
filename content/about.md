@@ -1,12 +1,23 @@
 +++
 title = "About"
-description = "About the Vis-Viva Blog"
+description = "About my blog and myself"
 date = "2026-08-16"
 draft = false
 +++
 
-The Vis-Viva Blog explores orbital mechanics, spaceflight, and the practical ideas that connect physics to mission design.
+## Impressum
 
-Articles aim to make technical topics approachable without losing the equations and assumptions that matter. Expect worked examples, clear diagrams, and links to useful references.
+Angaben gemäß § 18 Abs. 1 Medienstaatsvertrag (MStV)
 
-Whether you are a student, an engineer, or simply curious about how objects move through space, this site is a place to learn one orbit at a time.
+Simon Lauser
+Falkenweg 7
+75446 Wiernsheim
+Deutschland
+
+Kontakt:
+E-Mail: simon ät lauser punkt dev
+
+Verantwortlich für den Inhalt
+
+Simon Lauser
+Anschrift wie oben.

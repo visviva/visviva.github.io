@@ -2,7 +2,7 @@
 title = "Understanding the Vis-Viva Equation"
 description = "A quick introduction to the equation that connects orbital speed, distance, and energy."
 date = "2026-08-16"
-draft = true
+draft = false
 tags = ["orbital-mechanics", "physics"]
 +++
 

@@ -1,0 +1,22 @@
+config:
+  default: true
+  MD013:
+    line_length: 100
+    heading_line_length: 100
+    code_blocks: false
+    tables: false
+
+globs:
+  - "**/*.md"
+
+ignores:
+  - "themes/**"
+  - "public/**"
+
+overrides:
+  - filter:
+      - "archetypes/**/*.md"
+      - "content/**/*.md"
+    config:
+      MD041: false
+    combine: merge
