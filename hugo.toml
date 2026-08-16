@@ -1,6 +1,6 @@
-baseURL = 'https://example.org/'
+baseURL = 'https://visviva.github.io/'
 locale = 'en-us'
-title = 'My New Hugo Project'
+title = 'My blog about stuff that I do and find interesting'
 theme = 'paper'
 
 [params]
@@ -9,3 +9,10 @@ name = 'Simon Lauser'
 bio = 'I am a software engineer and open source enthusiast.'
 monoDarkIcon = true
 math = true
+
+[menu]
+  [[menu.main]]
+    identifier = 'about'
+    name = 'About'
+    url = '/about/'
+    weight = 10
