@@ -10,14 +10,19 @@ draft = false
 Angaben gemäß § 18 Abs. 1 Medienstaatsvertrag (MStV)
 
 Simon Lauser
+
 Falkenweg 7
+
 75446 Wiernsheim
+
 Deutschland
 
 Kontakt:
+
 E-Mail: simon ät lauser punkt dev
 
 Verantwortlich für den Inhalt
 
 Simon Lauser
+
 Anschrift wie oben.

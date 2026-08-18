@@ -1,0 +1,45 @@
+{{ define "main" }}
+<div class="shell home-grid">
+  <aside class="bio-card">
+    {{ with site.Params.role }}<p class="eyebrow">{{ . }}</p>{{ end }}
+    <h1>{{ site.Params.name | default site.Params.author }}</h1>
+    <p>{{ site.Params.bio }}</p>
+    <div class="bio-links">
+      <a href="{{ relURL "about/" }}">About</a>
+    </div>
+  </aside>
+
+  <section class="post-index" aria-labelledby="writing-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Archive</p>
+        <h2 id="writing-title">Writing</h2>
+      </div>
+      <a class="quiet-link" href="{{ relURL "tags/" }}">Browse by tag →</a>
+    </div>
+
+    {{ $posts := where site.RegularPages "Section" "posts" }}
+    {{ range $posts.GroupByDate "2006" }}
+      <section class="year-group">
+        <h3 class="year">{{ .Key }}</h3>
+        <div class="post-list">
+          {{ range .Pages }}
+            <article class="post-row">
+              <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 02" }}</time>
+              <div>
+                <h4><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h4>
+                {{ with .Description }}<p>{{ . }}</p>{{ end }}
+                {{ with .Params.tags }}
+                  <div class="tag-line">
+                    {{ range . }}<a href="{{ (printf "tags/%s/" (. | urlize)) | relURL }}">#{{ . }}</a>{{ end }}
+                  </div>
+                {{ end }}
+              </div>
+            </article>
+          {{ end }}
+        </div>
+      </section>
+    {{ end }}
+  </section>
+</div>
+{{ end }}

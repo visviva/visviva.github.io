@@ -1,0 +1,20 @@
+{{ define "main" }}
+<section class="shell listing-page">
+  <header class="listing-header">
+    <p class="eyebrow">{{ .Kind | title }}</p>
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="prose compact">{{ . }}</div>{{ end }}
+  </header>
+  <div class="post-list wide">
+    {{ range .Pages.ByDate.Reverse }}
+      <article class="post-row">
+        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006 · Jan 02" }}</time>
+        <div>
+          <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+          {{ with .Description }}<p>{{ . }}</p>{{ end }}
+        </div>
+      </article>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

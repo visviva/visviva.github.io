@@ -1,0 +1,36 @@
+{{ define "main" }}
+{{ if eq .Section "posts" }}
+<article class="article-shell">
+  <aside class="toc-rail" aria-label="On this page">
+    <div class="sticky-rail">
+      <a class="back-link" href="{{ site.Home.RelPermalink }}">← All posts</a>
+      <p class="rail-title">On this page</p>
+      {{ .TableOfContents }}
+    </div>
+  </aside>
+
+  <div class="article-main">
+    <header class="article-header">
+      <div class="article-meta">
+        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2 January 2006" }}</time>
+        {{ with .ReadingTime }}<span>·</span><span>{{ . }} min read</span>{{ end }}
+      </div>
+      <h1>{{ .Title }}</h1>
+      {{ with .Description }}<p class="lede">{{ . }}</p>{{ end }}
+      {{ with .Params.tags }}
+        <div class="tags">
+          {{ range . }}<a href="{{ (printf "tags/%s/" (. | urlize)) | relURL }}">{{ . }}</a>{{ end }}
+        </div>
+      {{ end }}
+    </header>
+    <div class="prose">{{ .Content }}</div>
+  </div>
+
+</article>
+{{ else }}
+<article class="shell simple-page">
+  <header class="article-header"><h1>{{ .Title }}</h1>{{ with .Description }}<p class="lede">{{ . }}</p>{{ end }}</header>
+  <div class="prose">{{ .Content }}</div>
+</article>
+{{ end }}
+{{ end }}

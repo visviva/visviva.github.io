@@ -1,0 +1,14 @@
+{{ define "main" }}
+<section class="shell listing-page">
+  <header class="listing-header">
+    <p class="eyebrow">Index</p>
+    <h1>{{ .Title }}</h1>
+    <p class="lede">Filter the archive by topic.</p>
+  </header>
+  <div class="tag-cloud">
+    {{ range .Data.Terms.ByCount }}
+      <a href="{{ .Page.RelPermalink }}"><span>{{ .Page.LinkTitle }}</span><sup>{{ .Count }}</sup></a>
+    {{ end }}
+  </div>
+</section>
+{{ end }}

@@ -1,0 +1,5 @@
+{{- $id := printf "note-%d" .Ordinal -}}
+<span class="note-anchor" id="ref-{{ $id }}" aria-hidden="true"></span>
+<span class="margin-note" id="{{ $id }}" role="note" data-margin-note data-note-anchor="ref-{{ $id }}">
+  <span>{{ .Inner | markdownify }}</span>
+</span>

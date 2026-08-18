@@ -4,6 +4,7 @@ description = "A quick introduction to the equation that connects orbital speed,
 date = "2026-08-16"
 draft = false
 tags = ["orbital-mechanics", "physics"]
+math = true
 +++
 
 The vis-viva equation is one of the most useful shortcuts in orbital mechanics. It gives an object's speed at any point in a Keplerian orbit:

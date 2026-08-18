@@ -1,0 +1,20 @@
+baseURL = 'https://example.com/'
+locale = 'en-us'
+title = 'Margin Tech'
+
+enableRobotsTXT = true
+
+[taxonomies]
+  tag = 'tags'
+
+[markup]
+  [markup.highlight]
+    noClasses = false
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 3
+    ordered = false
+
+[params]
+  description = 'Notes on software, systems, and the craft around them.'
+  math = false

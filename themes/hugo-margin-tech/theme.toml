@@ -1,0 +1,11 @@
+name = 'Margin Tech'
+license = 'MIT'
+licenselink = 'https://opensource.org/licenses/MIT'
+description = 'A technical Hugo blog with floating TOC and margin notes.'
+homepage = 'https://example.com/'
+tags = ['blog', 'technical', 'minimal', 'responsive', 'toc', 'sidenotes']
+features = ['responsive', 'syntax-highlighting', 'toc', 'tags', 'year-groups', 'margin-notes']
+min_version = '0.146.0'
+
+[author]
+  name = 'Your Name'

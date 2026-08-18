@@ -1,0 +1,35 @@
+{{- $links := slice -}}
+{{- with site.Params.github -}}
+  {{- $url := . -}}
+  {{- if not (or (hasPrefix $url "https://") (hasPrefix $url "http://")) -}}
+    {{- $url = printf "https://github.com/%s" (strings.TrimPrefix "@" $url) -}}
+  {{- end -}}
+  {{- $links = $links | append (dict "label" "GitHub" "url" $url) -}}
+{{- end -}}
+{{- with site.Params.linkedin -}}
+  {{- $url := . -}}
+  {{- if not (or (hasPrefix $url "https://") (hasPrefix $url "http://")) -}}
+    {{- $url = printf "https://www.linkedin.com/in/%s" $url -}}
+  {{- end -}}
+  {{- $links = $links | append (dict "label" "LinkedIn" "url" $url) -}}
+{{- end -}}
+{{- with site.Params.mastodon -}}
+  {{- $links = $links | append (dict "label" "Mastodon" "url" .) -}}
+{{- end -}}
+{{- with site.Params.bluesky -}}
+  {{- $url := . -}}
+  {{- if not (or (hasPrefix $url "https://") (hasPrefix $url "http://")) -}}
+    {{- $url = printf "https://bsky.app/profile/%s" (strings.TrimPrefix "@" $url) -}}
+  {{- end -}}
+  {{- $links = $links | append (dict "label" "Bluesky" "url" $url) -}}
+{{- end -}}
+{{- with site.Params.email -}}
+  {{- $url := . -}}
+  {{- if not (hasPrefix $url "mailto:") -}}{{- $url = printf "mailto:%s" $url -}}{{- end -}}
+  {{- $links = $links | append (dict "label" "Email" "url" $url) -}}
+{{- end -}}
+{{- with $links }}
+  <nav class="social-links" aria-label="Social links">
+    {{- range . }}<a href="{{ .url | safeURL }}" rel="me">{{ .label }}</a>{{ end -}}
+  </nav>
+{{- end }}

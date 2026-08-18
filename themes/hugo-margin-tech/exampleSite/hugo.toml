@@ -1,0 +1,22 @@
+baseURL = 'https://example.org/'
+locale = 'en-us'
+title = 'Simon Notes'
+theme = 'hugo-margin-tech'
+
+[taxonomies]
+  tag = 'tags'
+
+[markup]
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 3
+    ordered = false
+
+[params]
+  name = 'Simon Example'
+  role = 'Software engineer'
+  bio = 'I write about compilers, distributed systems, developer tools, and things learned the hard way.'
+  description = 'Technical notes on software and systems.'
+  github = 'https://github.com/example'
+  email = 'hello@example.com'
+  math = true
