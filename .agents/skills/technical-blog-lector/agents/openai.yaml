@@ -1,0 +1,4 @@
+interface:
+  display_name: "Technical Blog Lector"
+  short_description: "Plain, inclusive reviews for technical posts"
+  default_prompt: "Use $technical-blog-lector to review this post for clarity, inclusion, and technical readability."

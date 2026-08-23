@@ -106,8 +106,8 @@ So let's look at the graphics API.
 
 To draw something on a screen the
 [documentation](https://learn.microsoft.com/en-us/dotnet/maui/user-interface/graphics/?view=net-maui-10.0)
-tells to create a class that inherits from `IDrawable`. So let's start by creating a .NET MAUI app
-in Visual Studio or an IDE of your choice and add a new class within the `Controls` namespace:
+tells to create a class that implements `IDrawable`. So let's start by creating a .NET MAUI app in
+Visual Studio or an IDE of your choice and add a new class within the `Controls` namespace:
 
 ```csharp
 namespace CircularProgressBar.Mobile.Controls;
@@ -325,10 +325,14 @@ Then we can create add the slider and bind its value to our custom control withi
 <ContentPage
   xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
   xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-  x:Class="MauiApp1.MainPage"
+  x:Class="CircularProgressBar.Mobile.MainPage"
   xmlns:control="clr-namespace:CircularProgressBar.Mobile.Controls"
   xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
 >
+  <ContentPage.Resources>
+    <toolkit:DoubleToIntConverter x:Key="DoubleToIntConverter" />
+  </ContentPage.Resources>
+
   <VerticalStackLayout>
     <control:CircularProgressBarView
       x:Name="CircularProgressBar"
@@ -362,8 +366,9 @@ Everthing build and runs so far bit it is not quite right.
 When the slider is changed, the number of circles is not changing at all. Also at startup, $20$
 circles are set but many more show up. What is the problem now?
 
-When the slider is changed, the property is set and forwarded to the drawable. But the `Draw` method
-is never called again. The property change must also tell the drawable to redraw.
+When the slider is moved, the binding updates `CircularProgressBarView.NumberOfCircles`, but the
+drawable still contains its default value of $100$. In addition, changing the drawable does not
+automatically redraw the GraphicsView.
 
 There are propably many ways to do this but in my opinion the following is a straightforward way to
 do it.
@@ -414,14 +419,459 @@ is the way to go.
 
 ## Child Controls
 
-### Child Controls the complicated way
+I have found two ways to implement the child controls. I am not sure which way is the idiomatic way
+as the documentation does not give a concrete example for our use case. So both ways are presented
+here.
 
-### How do templates work
+{{< note >}} The MAUI Community Toolkit also has a source generator `BindableProperty`. This reduces
+duplication of defining these bindable properties. Definitly worth looking into. {{< /note >}} One
+way is to use an attribute `ContentProperty`. There is a little bit of not really helpful
+documentation
+[here](https://learn.microsoft.com/en-us/dotnet/maui/user-interface/controls/contentview?view=net-maui-10.0).
+This is mainly based on a
+[stackoverflow question](https://stackoverflow.com/questions/75017130/add-custom-content-inside-a-contentview-using-xaml).
+This way is used a lot by the [MAUI Community Toolkit](https://github.com/CommunityToolkit/Maui).
 
-### Child Controls as template
+{{< note >}} IMHO the documentation for templates is written for people that already understand
+templates. At first I could not really get the core idea. I have written a small introduction to
+templates make the concept easier to understand for myself. If you already know templates, you can
+skip it.{{< /note >}} The other way is using control templates. There is quite a lot of
+documentation
+[here](https://learn.microsoft.com/en-us/dotnet/maui/fundamentals/controltemplate?view=net-maui-10.0).
+The idea is to split the visual structure of the control and the content of the control. The visual
+structure is defined in the template with a placeholder for child content. In contrast to the
+`ContentProperty` approach this ways is more explicit and needs more glue to work.
 
-## Quick math to create the final control
+I personally completed the control using control templates. This way has documentation compared to
+the `ContentProperty` approach.
+
+### Option A: Using ContentProperty
+
+Let's start by adding a child to our control in `MainPage.xaml`:
+
+```xml
+<control:CircularProgressBarView
+  x:Name="CircularProgressBar"
+  NumberOfCircles="{Binding Value, Source={x:Reference CircleSlider}, Converter={StaticResource DoubleToIntConverter}}"
+>
+  <Label
+    Text="Hello World!"
+    HorizontalTextAlignment="Center"
+    VerticalTextAlignment="Center"
+    FontSize="24"
+  />
+</control:CircularProgressBarView>
+```
+
+When we then run our application, the graphics view is completely overridden by the label.
+
+![Overriden graphics view](/diagrams/dotnet-maui-graphics-control/some-circles-3.png)
+
+The documentation of `ContentProperty` actually explains this behavior. The `Content` property of
+the custom control is set to the label which then overrides the graphics view completely. To avoid
+this override, we redirect the content into another property using `ContentProperty`. We therefore
+adapt `CircularProgressBarView` within `CircularProgressBarView.xaml.cs` and change it to:
+
+```csharp
+[ContentProperty(nameof(CenterContent))]
+public partial class CircularProgressBarView : ContentView
+{
+    public static readonly BindableProperty CenterContentProperty = BindableProperty.Create(
+        nameof(CenterContent),
+        typeof(View),
+        typeof(CircularProgressBarView)
+    );
+
+    public View? CenterContent
+    {
+        get => (View?)GetValue(CenterContentProperty);
+        set => SetValue(CenterContentProperty, value);
+    }
+
+    // rest of class unchanged
+}
+```
+
+When we now run the application, it is displaying nothing of our custom control anymore. As we
+redirected the content into the property, no content is set anymore. We must adapt the
+`CircularProgressView.xaml`. We explicitly wrap the content with `<ContentView.Content>`.
+
+```xml
+<ContentView.Content>
+  <Grid>
+    <GraphicsView
+      x:Name="GraphicsView"
+      HeightRequest="400"
+      WidthRequest="400"
+      HorizontalOptions="Center"
+      VerticalOptions="Center"
+    />
+  </Grid>
+</ContentView.Content>
+```
+
+Now the graphics view is back when the application is run.
+
+To display the child content we add a `ContentView` and bind it to our `CenterContent` property. To
+enable bindings to itself, we set `x:Name` to `this` to enable access to the instance of the custom
+control. To excplicitly control the visiblity for what is on top of what, we also accordingly set
+the Z-index.
+
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+  xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+  x:Class="CircularProgressBar.Mobile.Controls.CircularProgressBarView"
+  xmlns:control="clr-namespace:CircularProgressBar.Mobile.Controls"
+  x:Name="this"
+>
+  <ContentView.Content>
+    <Grid>
+      <GraphicsView
+        x:Name="GraphicsView"
+        HeightRequest="400"
+        WidthRequest="400"
+        HorizontalOptions="Center"
+        VerticalOptions="Center"
+        ZIndex="0"
+      />
+
+      <ContentView
+        Content="{Binding CenterContent, Source={x:Reference this}}"
+        HorizontalOptions="Fill"
+        VerticalOptions="Fill"
+        ZIndex="1"
+      />
+    </Grid>
+  </ContentView.Content>
+</ContentView>
+```
+
+And it is working!
+
+![Custom control with child control](/diagrams/dotnet-maui-graphics-control/some-circles-4.png)
+
+### Option B: Using templates
+
+Before we change our custom control to a templated view, we first must understand how control
+templates work in .NET MAUI. If you already know control templates, feel free to skip the next
+section.
+
+#### How do templates work
+
+For me, the easiest mental model of how templates work is:
+
+> A `ControlTemplate` is a replaceable XAML body for a `ContentView` or `ContentPage`. It defines
+> the visual structure seprately from the logic of the control/page.
+
+The control owns the data and the behavior while the template decides on what the control looks
+like. The
+[documentation](https://learn.microsoft.com/en-us/dotnet/maui/fundamentals/controltemplate?view=net-maui-10.0)
+directly jumps into `RelativeSource`, `TemplatedParent`, `Resources`, etc. without describing this
+simple idea.
+
+Lets forget custom controls for a moment. We just have a normal page:
+
+```xml
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="MyApp.MainPage">
+
+</ContentPage>
+```
+
+and we give this page a control template:
+
+```xml
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="MyApp.MainPage">
+
+    <ContentPage.ControlTemplate>
+        <ControlTemplate>
+            <Border
+                BackgroundColor="LightBlue"
+                Padding="30">
+
+                <Label
+                    Text="I came from the template"
+                    FontSize="24" />
+
+            </Border>
+        </ControlTemplate>
+    </ContentPage.ControlTemplate>
+
+</ContentPage>
+```
+
+Then the visual structure of the page comes from the template. We can think of this:
+
+```xml
+<ContentPage>
+    ...
+</ContentPage>
+```
+
+as an object that has a property like:
+
+```csharp
+page.ControlTemplate = someTemplate;
+```
+
+When the template is applied, MAUI will then create the controls described in the template and put
+them into the visual tree of the page.
+
+```text
+ContentPage
+    └── ControlTemplate
+            └── Border
+                    └── Label
+```
+
+This is the core concept.
+
+In most of the times, it makes sense to put the template into a resources or into a separate
+resources file, to enable its reuse. In a lot of cases it does not make sense to directly put it
+into the page itself.
+
+This leads to:
+
+```xml
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="MyApp.MainPage"
+    ControlTemplate="{StaticResource BlueTemplate}">
+
+    <ContentPage.Resources>
+        <ControlTemplate x:Key="BlueTemplate">
+            <Border
+                BackgroundColor="LightBlue"
+                Padding="30">
+
+                <Label
+                    Text="Hello from the template"
+                    FontSize="24" />
+
+            </Border>
+        </ControlTemplate>
+    </ContentPage.Resources>
+</ContentPage>
+```
+
+Where the template is referenced by its key `BlueTemplate` in the setter
+`ControlTemplate="{StaticResource BlueTemplate}"`. The mental model is now:
+
+```text
+ResourceDictionary
+    └── "BlueTemplate"
+          └── Border
+                └── Label
+
+
+ContentPage
+    └── ControlTemplate = BlueTemplate
+```
+
+No magic so far.
+
+Now to the interesting part of child controls. Let's suppose we have a page now with content and a
+set template:
+
+```xml
+<ContentPage
+    ...
+    ControlTemplate="{StaticResource BlueTemplate}">
+
+    <VerticalStackLayout>
+        <Label Text="Username" />
+        <Entry />
+        <Button Text="Login" />
+    </VerticalStackLayout>
+
+</ContentPage>
+```
+
+We now have a problem. Where should the content appear? We need a mechanism to say:
+
+> Put the content of the page here.
+
+This is what `ContentPresenter` does. It is the location within the template where the content of
+the page is inserted.
+
+So we update the template to
+
+```xml
+<ControlTemplate x:Key="BlueTemplate">
+    <Border
+        BackgroundColor="LightBlue"
+        Padding="30">
+
+        <ContentPresenter />
+
+    </Border>
+</ControlTemplate>
+```
+
+Conceptually the the model becomes:
+
+```text
+ResourceDictionary
+    └── "BlueTemplate"
+          └── Border
+                └── ContentPresenter
+
+
+ContentPage
+    ├── ControlTemplate = BlueTemplate
+    └── Content
+          └── VerticalStackLayout
+                ├── Label
+                ├── Entry
+                └── Button
 
 ```
 
+Which on instantiation of the page leads to replacement of `ContentPresenter` and a instantiated
+control tree of
+
+```text
+Border
+└── VerticalStackLayout
+    ├── Label
+    ├── Entry
+    └── Button
 ```
+
+{{< note >}} No real magic behind. I wish the offical documentation would sometimes be more tutorial
+than reference, especially in the fundamentals section. Sometimes simple examples are much more
+useful than fancy examples using multiple things at once.{{< /note >}} This is the most important
+concept of this feature as the same model can also be applied to a custom control.
+
+#### Migrating the custom control to control templates
+
+To convert our custom control now to templates, we start with adapting `CircularProgressView.xaml`:
+
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+  xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+  x:Class="CircularProgressBar.Mobile.Controls.CircularProgressBarView"
+>
+  <ContentView.Resources>
+    <ControlTemplate x:Key="CircularProgressBarTemplate">
+      <Grid>
+        <GraphicsView
+          x:Name="GraphicsView"
+          HeightRequest="400"
+          WidthRequest="400"
+          HorizontalOptions="Center"
+          VerticalOptions="Center"
+          ZIndex="0"
+        />
+
+        <ContentPresenter />
+      </Grid>
+    </ControlTemplate>
+  </ContentView.Resources>
+</ContentView>
+```
+
+The code behind in `CircularProgressView.xaml.cs` is changed to:
+
+```csharp
+namespace CircularProgressBar.Mobile.Controls;
+
+public partial class CircularProgressBarView : ContentView
+{
+    public static readonly BindableProperty NumberOfCirclesProperty = BindableProperty.Create(...);
+    public int NumberOfCircles{ ... }
+    private readonly CircularProgressBarDrawable _circularProgressBarDrawable = new();
+
+    public CircularProgressBarView()
+    {
+        InitializeComponent();
+    }
+
+    protected override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+
+        var graphicsView = GetTemplateChild("GraphicsView") as GraphicsView;
+        graphicsView?.Drawable = _circularProgressBarDrawable;
+        UpdateDrawable();
+    }
+
+    private void UpdateDrawable()
+    {
+        _circularProgressBarDrawable.NumberOfCircles = NumberOfCircles;
+
+        var graphicsView = GetTemplateChild("GraphicsView") as GraphicsView;
+        graphicsView?.Invalidate();
+    }
+
+    private static void OnPropertyOfDrawableChanged(
+        BindableObject bindable,
+        object oldValue,
+        object newValue
+    ) {...}
+
+}
+```
+
+The only real difference is that the we now need the method `OnApplyTemplate` to wire the drawable
+into the graphics view. We cannot directly address the graphics view anymore, as it is now part of
+the template. Therefore we have to use `GetTemplateChild("GraphicsView")` to address it. The same
+applies also to `UpdateDrawable`.
+
+To make it working, we have to set the template for our custom view in `MainPage.xaml`:
+
+```xml
+<control:CircularProgressBarView
+  x:Name="CircularProgressBar"
+  NumberOfCircles="{Binding Value, Source={x:Reference CircleSlider}, Converter={StaticResource DoubleToIntConverter}}"
+
+  ControlTemplate="{StaticResource CircularProgressBarTemplate}"
+
+>
+  <Label
+    Text="Hello World!"
+    HorizontalTextAlignment="Center"
+    VerticalTextAlignment="Center"
+    FontSize="24"
+  />
+</control:CircularProgressBarView>
+```
+
+And its working!
+
+![Custom control with child control](/diagrams/dotnet-maui-graphics-control/some-circles-4.png)
+
+But the API of our custom control is not great. In our case, the user of the control should not set
+the control template for the control. This should not be part of the API of this control. So lets
+revert the change in `MainPage.xaml` and find a way to automatically set the `ControlTemplate`.
+
+The easiest way I have found to accomplish this, is to just explicitly set the `ControlTemplate` in
+the code behind in `CircularProgressView.xaml.cs`. On instantiation we need to set the
+`ControlTemplate` property. We do this in the constructor:
+
+```csharp
+public CircularProgressBarView()
+{
+    InitializeComponent();
+    var theControlTemplate = Resources["CircularProgressBarTemplate"];
+    ControlTemplate = theControlTemplate as ControlTemplate;
+}
+```
+
+Running the application again shows that it is working and the API stays clean.
+
+## Finalizing the control
+
+Now we know how to create a custom control with child controls. We know how to draw circles and we
+also know how to pipe all of the part with each other. Let's complete the control and add the
+circles and the arcs.
