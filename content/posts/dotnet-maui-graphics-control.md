@@ -1,7 +1,7 @@
 +++
 title = "Circular Progress Bars in .NET MAUI"
-description = "Learning how to create a custom and reusable UI controls with an embedded GraphicsView and child controls in .NET MAUI 10"
-date = "2026-08-16"
+description = "Learn how to create a reusable custom UI control with an embedded GraphicsView and child content in .NET MAUI 10"
+date = "2026-08-23"
 draft = true
 tags = ["c#", "xaml", "dotnet", "maui"]
 math = true
@@ -9,17 +9,20 @@ math = true
 
 {{< note >}}I think in Flutter controls are called widgets, in React we call them components but
 essentially they are all some kind of custom, user-defined UI elements.{{< /note >}} For a time
-tracking app I am in need a special control I have not found yet. It shall be some kind of circular
-progress bar having two rings and a custom area for child controls. The inner ring is to show the
-planned time and the outer is used to show additional time that follows after the planned time. The
-area in the middle will be used to place child controls. In my case it will be a
-`VerticalStackLayout` containing label that show the times. I have further plans to reuse this
-control, so my goal is to not hardcode everything but to create it as a custom control.
+tracking app, I need a circular progress control that I have not found elsewhere. It should have two
+rings and an area for child content. The inner ring shows the planned time. The outer ring shows any
+additional time after the planned time has elapsed. The area in the middle hosts child controls. In
+my case, it contains a `VerticalStackLayout` with labels that show both times.
+
+I also want to reuse the control, so I do not want to hardcode its content or appearance. In this
+post, we build it from first principles with `GraphicsView`, `IDrawable`, bindable properties, and a
+control template. You should be familiar with basic C# and XAML, but you do not need experience with
+custom drawing.
 
 ![Example design of the control](/diagrams/dotnet-maui-graphics-control/goal-control.drawio.svg)
 
-Drawing it in draw.io is easy. We just need two circles and two arcs. For the child controls we just
-need to calculate the area within the inner circle and clip the content if needed.
+The design consists of two circles and two arcs. For the child controls, we need to calculate the
+area within the inner circle and clip the content if needed.
 
 Now comes the hard part. I am new to .NET MAUI and I have no idea how to create a custom control
 with custom graphics.
@@ -27,38 +30,38 @@ with custom graphics.
 {{< note >}} To me this is the same as cooking vs. ordering a finished meal. I want to learn how to
 cook and understand the ingredients not optimize the time to get the dish onto the table as quickly
 as possible. Both cases are equally important, you need to know which path you are going to choose.
-{{< /note >}}Of course, some AI-Agent, like Copilot, Claude and Codex is definitly capable of
-creating this control for me. Propably within just a few minutes. But my goal is not to have the
-control immediatly. I want to learn how stuff is working. I want to understand the ideas behind.
+{{< /note >}}Of course, AI agents such as Copilot, Claude, and Codex are capable of creating this
+control for me, probably within a few minutes. But my goal is not to have the control immediately. I
+want to learn how it works and understand the ideas behind it.
 
-So the first place we start is just by looking at the
-[documentation of .NET MAUI](https://learn.microsoft.com/en-us/dotnet/maui/?view=net-maui-10.0).
-Lets start directly at the
-[grpahics](https://learn.microsoft.com/en-us/dotnet/maui/user-interface/graphics/?view=net-maui-10.0).
+I started with the
+[.NET MAUI documentation](https://learn.microsoft.com/en-us/dotnet/maui/?view=net-maui-10.0). Let's
+look directly at the
+[graphics documentation](https://learn.microsoft.com/en-us/dotnet/maui/user-interface/graphics/?view=net-maui-10.0).
 
-There we have:
+It first compares the two available approaches:
 
 > There are many similarities between the functionality provided by Microsoft.Maui.Graphics, and the
 > functionality provided by .NET MAUI shapes and brushes. However, each is aimed at different
 > scenarios:
 
-And then an explanation for `Maui.Graphics`:
+The documentation describes `Microsoft.Maui.Graphics` as follows:
 
 > Microsoft.Maui.Graphics functionality must be consumed on a drawing canvas, enables performant
 > graphics to be drawn, and provides a convenient approach for writing graphics-based controls. For
 > example, a control that replicates the GitHub contribution profile can be more easily implemented
 > using Microsoft.Maui.Graphics than by using .NET MAUI shapes.
 
-and for `Maui.Shapes`:
+It describes .NET MAUI shapes this way:
 
 > .NET MAUI shapes can be consumed directly on a page, and brushes can be consumed by all controls.
 > This functionality is provided to help you produce an attractive UI.
 
-I am not sure which one to use. The shapes sound easier so let's start looking into it.
+I am not sure which one to use. Shapes sound easier, so let's look at them first.
 
 ## Shapes
 
-Drawing a circle is actually trivial:
+A circle needs only a few XAML attributes:
 
 ```xml
 <Ellipse Stroke="Red"
@@ -68,8 +71,8 @@ Drawing a circle is actually trivial:
          HorizontalOptions="Start" />
 ```
 
-I guess drawing the elements and aranging them within a grid is doable. But drawing an arc looks not
-so good:
+Drawing the elements and arranging them within a grid looks manageable. An arc, however, needs more
+markup:
 
 ```xml
 <Path Stroke="Black">
@@ -95,19 +98,19 @@ so good:
 </Path>
 ```
 
-This is quite some indentation for a "just" and arc. I think it is definitly possible to do it with
-shapes as the geometry is bindable. I guess, there can be a code behind that does the calculations
-and updates the shapes. But this sounds like quite a lot of plumbing with the risk of landing in
-unreadable XAML-hell.
+That is quite a lot of indentation for one arc. It is possible to use shapes because the geometry is
+bindable. A code-behind file could perform the calculations and update the shapes. However, that
+would require considerable plumbing and could make the XAML difficult to read.
 
 So let's look at the graphics API.
 
-## Graphics View
+## GraphicsView
 
-To draw something on a screen the
+To draw something on the screen, the
 [documentation](https://learn.microsoft.com/en-us/dotnet/maui/user-interface/graphics/?view=net-maui-10.0)
-tells to create a class that implements `IDrawable`. So let's start by creating a .NET MAUI app in
-Visual Studio or an IDE of your choice and add a new class within the `Controls` namespace:
+tells us to create a class that implements `IDrawable`. Start by creating a .NET MAUI app in Visual
+Studio or an IDE of your choice. Then add a class in the `CircularProgressBar.Mobile.Controls`
+namespace:
 
 ```csharp
 namespace CircularProgressBar.Mobile.Controls;
@@ -121,7 +124,7 @@ public class CircularProgressBarDrawable : IDrawable
 }
 ```
 
-and in `MainPage.xaml` replace everything withing with:
+Then replace the contents of `MainPage.xaml` with:
 
 {{< note >}} Unfortunately the background property of the graphics view does not work on windows. It
 does work on Android. I had found some github issues that it was not working on Android quite some
@@ -149,11 +152,10 @@ time ago but was fixed. Maybe the fix did not work on Windows.{{< /note >}}
 </ContentPage>
 ```
 
-We explicitly set the property `GraphicsView.Drawable` to `control:CircularProgressBarDrawable`.
-This creates the connection between the control `GraphicsView` and our `CircularProgressBarDrawable`
-class.
+We explicitly set `GraphicsView.Drawable` to `control:CircularProgressBarDrawable`. This connects
+the `GraphicsView` to our `CircularProgressBarDrawable` class.
 
-Then let's add some code to draw a few circles:
+Next, add some code to draw a few circles:
 
 ```csharp
 public void Draw(ICanvas canvas, RectF dirtyRect)
@@ -176,34 +178,32 @@ public void Draw(ICanvas canvas, RectF dirtyRect)
 
 ```
 
-The method starts with saving the current drawing context onto a "drawing-context-property-stack".
-This is useful as the drawing within this method is statful. `SaveState()` and `RestoreState()`
-together behave like a scope and properties set within this scope only apply to this scope. In this
-case this applies to the `FillColor` that is set to `Colors.LightSlateGrey`. Then a rectangle is
-drawn over the whole area. The area is defined by `RectF dirtyRect`.
+The method starts by saving the current canvas state. Drawing state is stateful, so `SaveState()`
+and `RestoreState()` work together like a scope. Properties changed between these calls are restored
+afterwards. Here, that applies to `FillColor`, which we set to `Colors.LightSlateGrey` before
+filling the area described by `RectF dirtyRect`.
 
-Then we just draw some circles with the center at $(10,10)$ and a radius of $5$ with an increment of
-$5$ for every loop cycle.
+Next, we draw circles centered at $(10,10)$. The first radius is $5$, and each loop iteration
+increases it by $5$.
 
 Running the app reveals:
 
 ![Some circles on a graphics view](/diagrams/dotnet-maui-graphics-control/some-circles-1.png)
 
-Nice, we have drawn circles! The hardest part of drawing something is done. To get the required
-geometry of our custom control, we just need to do some simple maths.
+Nice, we have drawn circles! We now know how to draw on the canvas. The remaining work is to
+calculate the geometry for our custom control.
 
-Now to the next unknown. How can we make this a custom control? We have quite a bunch of circles,
-how can we make the radius and its increment, the number of circles and their center, configurable?
-Let's transform it to a custom control.
+Now we face the next question: how do we turn this into a custom control? We need to make the
+radius, its increment, the number of circles, and their center configurable.
 
 ## Custom Control
 
-To create the custom control, we just add a `.NET MAUI ContentView (XAML)` to the project. I gave it
-the name `CircularProgressBarView.xaml`. It is also within the `Controls` namespace.
+To create the custom control, add a `.NET MAUI ContentView (XAML)` to the project. I named it
+`CircularProgressBarView.xaml` and placed it in the `CircularProgressBar.Mobile.Controls` namespace.
 
-First thing we do it to move the `GraphicsView` from the `MainPage.xaml` into the newly created
-`CircularProgressBarView.xaml`. But we do not set the property `<GraphicsView.Drawable>`. We do not
-want the user to specify internals of the control. This would be a bad API.
+First, move the `GraphicsView` from `MainPage.xaml` into the new `CircularProgressBarView.xaml`. Do
+not set `<GraphicsView.Drawable>` here. The control should configure its own internals instead of
+exposing them as part of its API.
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
@@ -225,10 +225,10 @@ want the user to specify internals of the control. This would be a bad API.
 </ContentView>
 ```
 
-And the magic now happens in the code behind file in `CircularProgressView.xaml.xs`. There we create
-a bindable property for the number of circles. According to the
+The connection now happens in the code-behind file, `CircularProgressBarView.xaml.cs`. There we
+create a bindable property for the number of circles. According to the
 [documentation on how to create a custom control](https://learn.microsoft.com/en-us/dotnet/maui/user-interface/controls/contentview?view=net-maui-10.0)
-this is easily done. We just need to declare it as properties:
+we need a `BindableProperty` field and a corresponding C# property:
 
 ```csharp
 namespace CircularProgressBar.Mobile.Controls;
@@ -255,9 +255,8 @@ public partial class CircularProgressBarView : ContentView
 }
 ```
 
-So far so good. This looks straightforward. No real magic. As we did not set the
-`GraphicsView.Drawable` property, we now need to create the drawable manually and pass it the
-`NumberOfCircles` value.
+So far, the control is straightforward. Because we did not set `GraphicsView.Drawable`, we now need
+to create the drawable ourselves and pass it the `NumberOfCircles` value.
 
 First we adapt `CircularProgressBarDrawable` and give it some properties with default values:
 
@@ -289,7 +288,7 @@ public class CircularProgressBarDrawable : IDrawable
 }
 ```
 
-Then in `CircularProgressView.xaml.xs` we add a member and adapt the constructor:
+Then, in `CircularProgressBarView.xaml.cs`, add a field and update the constructor:
 
 ```csharp
 public partial class CircularProgressBarView : ContentView
@@ -306,19 +305,19 @@ public partial class CircularProgressBarView : ContentView
 }
 ```
 
-To make our custom control interactive, let's add a slider on the main page and change the number of
-circles. No view model, just some xaml magic happening.
+To make our custom control interactive, let's add a slider to the main page and use it to change the
+number of circles. We can demonstrate the binding without introducing a view model.
 
-A slider returns the values in floating point but our control accepts only integer. We just add the
-awesome `CommunityToolkit.Maui` to have `DoubleToIntConverter` within xaml:
+A slider returns a floating-point value, but our control accepts an integer. The
+`CommunityToolkit.Maui` package provides a `DoubleToIntConverter` that we can use in XAML:
 
 ```bash
 dotnet add package CommunityToolkit.Maui
 ```
 
-and add `builder.UseMauiCommunityToolkit()` to `MauiProgram.cs`.
+Register the toolkit by adding `builder.UseMauiCommunityToolkit()` to `MauiProgram.cs`.
 
-Then we can create add the slider and bind its value to our custom control within `MainPage.xaml`:
+Then add the slider and bind its value to our custom control in `MainPage.xaml`:
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
@@ -359,21 +358,20 @@ Then we can create add the slider and bind its value to our custom control withi
 </ContentPage>
 ```
 
-Everthing build and runs so far bit it is not quite right.
+Everything builds and runs so far, but the result is not quite right.
 
 ![Changeable circles on a graphics view](/diagrams/dotnet-maui-graphics-control/some-circles-2.png)
 
-When the slider is changed, the number of circles is not changing at all. Also at startup, $20$
-circles are set but many more show up. What is the problem now?
+Moving the slider does not change the number of circles. At startup, the slider is set to $20$, but
+many more circles appear. What is happening?
 
 When the slider is moved, the binding updates `CircularProgressBarView.NumberOfCircles`, but the
 drawable still contains its default value of $100$. In addition, changing the drawable does not
 automatically redraw the GraphicsView.
 
-There are propably many ways to do this but in my opinion the following is a straightforward way to
-do it.
+There are probably several ways to solve this. I find the following approach straightforward.
 
-The `BindableProperty` offers a delegate that is called when the value is changed:
+`BindableProperty.Create` accepts a callback that runs when the value changes:
 
 ```csharp
 public static readonly BindableProperty NumberOfCirclesProperty = BindableProperty.Create(
@@ -385,8 +383,7 @@ public static readonly BindableProperty NumberOfCirclesProperty = BindableProper
 );
 ```
 
-In `OnPropertyOfDrawableChanged` we get the custom view object as parameter and tell it to update
-the graphics view.
+`OnPropertyOfDrawableChanged` receives the custom view and tells it to update the graphics view.
 
 ```csharp
 private static void OnPropertyOfDrawableChanged(
@@ -403,8 +400,8 @@ private static void OnPropertyOfDrawableChanged(
 }
 ```
 
-The `UpdateDrawable` method then does just set the `NumberOfCircles` propery in the drawable and
-tell the graphics view to redraw:
+`UpdateDrawable` sets the drawable's `NumberOfCircles` property and tells the graphics view to
+redraw:
 
 ```csharp
 private void UpdateDrawable()
@@ -414,36 +411,32 @@ private void UpdateDrawable()
 }
 ```
 
-Now it does work as we want to have it. To have controls for the other properties of drawable, this
-is the way to go.
+Now the control behaves as expected. We can use the same pattern for other drawable properties.
 
 ## Child Controls
 
-I have found two ways to implement the child controls. I am not sure which way is the idiomatic way
-as the documentation does not give a concrete example for our use case. So both ways are presented
-here.
+I found two ways to support child controls. I am not sure which one is idiomatic because the
+documentation does not provide a concrete example for this use case, so I will present both.
 
 {{< note >}} The MAUI Community Toolkit also has a source generator `BindableProperty`. This reduces
 duplication of defining these bindable properties. Definitly worth looking into. {{< /note >}} One
-way is to use an attribute `ContentProperty`. There is a little bit of not really helpful
-documentation
-[here](https://learn.microsoft.com/en-us/dotnet/maui/user-interface/controls/contentview?view=net-maui-10.0).
-This is mainly based on a
-[stackoverflow question](https://stackoverflow.com/questions/75017130/add-custom-content-inside-a-contentview-using-xaml).
-This way is used a lot by the [MAUI Community Toolkit](https://github.com/CommunityToolkit/Maui).
+way is to use the `ContentProperty` attribute. The
+[ContentProperty documentation](https://learn.microsoft.com/en-us/dotnet/api/microsoft.maui.controls.contentpropertyattribute?view=net-maui-10.0)
+only covers this briefly. This option is mainly based on a
+[Stack Overflow answer](https://stackoverflow.com/questions/75017130/add-custom-content-inside-a-contentview-using-xaml).
+The [MAUI Community Toolkit](https://github.com/CommunityToolkit/Maui) uses this approach in several
+controls.
 
 {{< note >}} IMHO the documentation for templates is written for people that already understand
 templates. At first I could not really get the core idea. I have written a small introduction to
 templates make the concept easier to understand for myself. If you already know templates, you can
-skip it.{{< /note >}} The other way is using control templates. There is quite a lot of
-documentation
-[here](https://learn.microsoft.com/en-us/dotnet/maui/fundamentals/controltemplate?view=net-maui-10.0).
+skip it.{{< /note >}} The other option uses control templates, which have more extensive
+[documentation](https://learn.microsoft.com/en-us/dotnet/maui/fundamentals/controltemplate?view=net-maui-10.0).
 The idea is to split the visual structure of the control and the content of the control. The visual
 structure is defined in the template with a placeholder for child content. In contrast to the
-`ContentProperty` approach this ways is more explicit and needs more glue to work.
+`ContentProperty` approach, this option is more explicit and needs more wiring.
 
-I personally completed the control using control templates. This way has documentation compared to
-the `ContentProperty` approach.
+I completed the control with a control template because that option is better documented.
 
 ### Option A: Using ContentProperty
 
@@ -463,14 +456,14 @@ Let's start by adding a child to our control in `MainPage.xaml`:
 </control:CircularProgressBarView>
 ```
 
-When we then run our application, the graphics view is completely overridden by the label.
+When we run the application, the label completely replaces the graphics view.
 
-![Overriden graphics view](/diagrams/dotnet-maui-graphics-control/some-circles-3.png)
+![Label replacing the graphics view](/diagrams/dotnet-maui-graphics-control/some-circles-3.png)
 
-The documentation of `ContentProperty` actually explains this behavior. The `Content` property of
-the custom control is set to the label which then overrides the graphics view completely. To avoid
-this override, we redirect the content into another property using `ContentProperty`. We therefore
-adapt `CircularProgressBarView` within `CircularProgressBarView.xaml.cs` and change it to:
+The documentation for `ContentProperty` explains this behavior. The label is assigned to the custom
+control's inherited `Content` property, replacing the graphics view. To prevent that, we use
+`ContentProperty` to redirect the child content to another property. Update
+`CircularProgressBarView.xaml.cs` as follows:
 
 ```csharp
 [ContentProperty(nameof(CenterContent))]
@@ -492,9 +485,10 @@ public partial class CircularProgressBarView : ContentView
 }
 ```
 
-When we now run the application, it is displaying nothing of our custom control anymore. As we
-redirected the content into the property, no content is set anymore. We must adapt the
-`CircularProgressView.xaml`. We explicitly wrap the content with `<ContentView.Content>`.
+When we run the application now, the custom control displays nothing. We redirected the child into
+`CenterContent`, so the inherited `Content` property is no longer set implicitly. We must update
+`CircularProgressBarView.xaml` and explicitly wrap the control's visual structure in
+`<ContentView.Content>`.
 
 ```xml
 <ContentView.Content>
@@ -512,10 +506,9 @@ redirected the content into the property, no content is set anymore. We must ada
 
 Now the graphics view is back when the application is run.
 
-To display the child content we add a `ContentView` and bind it to our `CenterContent` property. To
-enable bindings to itself, we set `x:Name` to `this` to enable access to the instance of the custom
-control. To excplicitly control the visiblity for what is on top of what, we also accordingly set
-the Z-index.
+To display the child content, add a `ContentView` and bind it to `CenterContent`. Set `x:Name` to
+`this` so the binding can reference the custom control instance. We also set `ZIndex` explicitly to
+control which element appears on top.
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
@@ -548,30 +541,29 @@ the Z-index.
 </ContentView>
 ```
 
-And it is working!
+The child content now appears above the graphics view.
 
 ![Custom control with child control](/diagrams/dotnet-maui-graphics-control/some-circles-4.png)
 
-### Option B: Using templates
+### Option B: Using control templates
 
-Before we change our custom control to a templated view, we first must understand how control
-templates work in .NET MAUI. If you already know control templates, feel free to skip the next
-section.
+Before we give our custom control a template, we need to understand how control templates work in
+.NET MAUI. If you already know them, you can skip the next section.
 
-#### How do templates work
+#### How do templates work?
 
 For me, the easiest mental model of how templates work is:
 
 > A `ControlTemplate` is a replaceable XAML body for a `ContentView` or `ContentPage`. It defines
-> the visual structure seprately from the logic of the control/page.
+> the visual structure separately from the logic of the control or page.
 
-The control owns the data and the behavior while the template decides on what the control looks
-like. The
+The control owns the data and behavior, while the template determines what the control looks like.
+The
 [documentation](https://learn.microsoft.com/en-us/dotnet/maui/fundamentals/controltemplate?view=net-maui-10.0)
 directly jumps into `RelativeSource`, `TemplatedParent`, `Resources`, etc. without describing this
-simple idea.
+core idea.
 
-Lets forget custom controls for a moment. We just have a normal page:
+Let's set custom controls aside for a moment and start with a normal page:
 
 ```xml
 <ContentPage
@@ -582,7 +574,7 @@ Lets forget custom controls for a moment. We just have a normal page:
 </ContentPage>
 ```
 
-and we give this page a control template:
+Next, give this page a control template:
 
 ```xml
 <ContentPage
@@ -607,7 +599,7 @@ and we give this page a control template:
 </ContentPage>
 ```
 
-Then the visual structure of the page comes from the template. We can think of this:
+The page's visual structure now comes from the template. We can think of the following XAML:
 
 ```xml
 <ContentPage>
@@ -615,14 +607,14 @@ Then the visual structure of the page comes from the template. We can think of t
 </ContentPage>
 ```
 
-as an object that has a property like:
+as an object with a property assignment like this:
 
 ```csharp
 page.ControlTemplate = someTemplate;
 ```
 
-When the template is applied, MAUI will then create the controls described in the template and put
-them into the visual tree of the page.
+When MAUI applies the template, it creates the controls described by the template and puts them in
+the page's visual tree.
 
 ```text
 ContentPage
@@ -633,9 +625,9 @@ ContentPage
 
 This is the core concept.
 
-In most of the times, it makes sense to put the template into a resources or into a separate
-resources file, to enable its reuse. In a lot of cases it does not make sense to directly put it
-into the page itself.
+In most cases, it makes sense to put the template in a resource dictionary, either on the page or in
+a separate resource file. This makes the template reusable and keeps it separate from the page
+content.
 
 This leads to:
 
@@ -662,8 +654,8 @@ This leads to:
 </ContentPage>
 ```
 
-Where the template is referenced by its key `BlueTemplate` in the setter
-`ControlTemplate="{StaticResource BlueTemplate}"`. The mental model is now:
+The setter `ControlTemplate="{StaticResource BlueTemplate}"` references the template by its
+`BlueTemplate` key. The mental model is now:
 
 ```text
 ResourceDictionary
@@ -678,8 +670,7 @@ ContentPage
 
 No magic so far.
 
-Now to the interesting part of child controls. Let's suppose we have a page now with content and a
-set template:
+Now we can add child content. Suppose we have a page with both content and a template:
 
 ```xml
 <ContentPage
@@ -702,7 +693,7 @@ We now have a problem. Where should the content appear? We need a mechanism to s
 This is what `ContentPresenter` does. It is the location within the template where the content of
 the page is inserted.
 
-So we update the template to
+Update the template to include it:
 
 ```xml
 <ControlTemplate x:Key="BlueTemplate">
@@ -716,7 +707,7 @@ So we update the template to
 </ControlTemplate>
 ```
 
-Conceptually the the model becomes:
+Conceptually, the model becomes:
 
 ```text
 ResourceDictionary
@@ -735,8 +726,8 @@ ContentPage
 
 ```
 
-Which on instantiation of the page leads to replacement of `ContentPresenter` and a instantiated
-control tree of
+When the page is instantiated, the `ContentPresenter` displays the page's content. The resulting
+control tree is:
 
 ```text
 Border
@@ -748,12 +739,13 @@ Border
 
 {{< note >}} No real magic behind. I wish the offical documentation would sometimes be more tutorial
 than reference, especially in the fundamentals section. Sometimes simple examples are much more
-useful than fancy examples using multiple things at once.{{< /note >}} This is the most important
-concept of this feature as the same model can also be applied to a custom control.
+useful than fancy examples using multiple things at once.{{< /note >}} This is the key concept
+because the same model also applies to a custom control.
 
 #### Migrating the custom control to control templates
 
-To convert our custom control now to templates, we start with adapting `CircularProgressView.xaml`:
+To convert our custom control to a control template, start by updating
+`CircularProgressBarView.xaml`:
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
@@ -781,7 +773,7 @@ To convert our custom control now to templates, we start with adapting `Circular
 </ContentView>
 ```
 
-The code behind in `CircularProgressView.xaml.cs` is changed to:
+Then update the code-behind file, `CircularProgressBarView.xaml.cs`:
 
 ```csharp
 namespace CircularProgressBar.Mobile.Controls;
@@ -789,7 +781,7 @@ namespace CircularProgressBar.Mobile.Controls;
 public partial class CircularProgressBarView : ContentView
 {
     public static readonly BindableProperty NumberOfCirclesProperty = BindableProperty.Create(...);
-    public int NumberOfCircles{ ... }
+    public int NumberOfCircles { ... }
     private readonly CircularProgressBarDrawable _circularProgressBarDrawable = new();
 
     public CircularProgressBarView()
@@ -823,12 +815,11 @@ public partial class CircularProgressBarView : ContentView
 }
 ```
 
-The only real difference is that the we now need the method `OnApplyTemplate` to wire the drawable
-into the graphics view. We cannot directly address the graphics view anymore, as it is now part of
-the template. Therefore we have to use `GetTemplateChild("GraphicsView")` to address it. The same
-applies also to `UpdateDrawable`.
+The main difference is that we now need `OnApplyTemplate` to connect the drawable to the graphics
+view. We cannot access the graphics view directly because it is part of the template. Instead, we
+retrieve it with `GetTemplateChild("GraphicsView")`. The same applies to `UpdateDrawable`.
 
-To make it working, we have to set the template for our custom view in `MainPage.xaml`:
+To make this work, set the template on our custom view in `MainPage.xaml`:
 
 ```xml
 <control:CircularProgressBarView
@@ -847,17 +838,16 @@ To make it working, we have to set the template for our custom view in `MainPage
 </control:CircularProgressBarView>
 ```
 
-And its working!
+The templated control now works.
 
 ![Custom control with child control](/diagrams/dotnet-maui-graphics-control/some-circles-4.png)
 
-But the API of our custom control is not great. In our case, the user of the control should not set
-the control template for the control. This should not be part of the API of this control. So lets
-revert the change in `MainPage.xaml` and find a way to automatically set the `ControlTemplate`.
+However, the API of our custom control is not ideal. Its consumers should not have to select the
+control template because that template is an implementation detail. Let's revert the change in
+`MainPage.xaml` and set the `ControlTemplate` automatically.
 
-The easiest way I have found to accomplish this, is to just explicitly set the `ControlTemplate` in
-the code behind in `CircularProgressView.xaml.cs`. On instantiation we need to set the
-`ControlTemplate` property. We do this in the constructor:
+The most direct approach I found is to set `ControlTemplate` explicitly in
+`CircularProgressBarView.xaml.cs`. We do this in the constructor:
 
 ```csharp
 public CircularProgressBarView()
@@ -868,16 +858,15 @@ public CircularProgressBarView()
 }
 ```
 
-Running the application again shows that it is working and the API stays clean.
+Running the application again confirms that the control works without exposing its template in the
+public API.
 
 ## Finalizing the control
 
-Now we know how to create a custom control with child controls. We know how to draw circles and we
-also know how to pipe all of the part with each other. Let's complete the control and add the
-circles and the arcs.
+We now know how to draw circles, expose bindable properties, and host child controls. Let's connect
+these parts and complete the two progress rings.
 
-We first start with the most interesting part, the drawable. The public API of the drawable is a
-record for the immutable properties of the rings:
+We start with the drawable. A record groups the ring settings that do not change during a draw:
 
 ```csharp
 public readonly record struct RingProperties(
@@ -890,16 +879,25 @@ public readonly record struct RingProperties(
 );
 ```
 
-The other dynamic properties of the Drawable are modeled as properties of the drawable:
+The constructor stores these settings for later draw calls. Values that can change while the control
+is running remain properties of the drawable:
 
 ```csharp
+private readonly RingProperties _ringProperties;
+
+public CircularProgressBarDrawable(RingProperties ringProperties)
+{
+    _ringProperties = ringProperties;
+}
+
 public float InnerProgress { get; set; }
 public float OuterProgress { get; set; }
 public bool IsEnabled { get; set; } = true;
 ```
 
-We also need two utility methods to keep the angle within $360$ degrees or set it to $90$ degress by
-default and to clamp the progress within $0$ and $1$:
+We also need two helper methods. `NormalizeAngle` keeps a finite angle within one rotation and uses
+$90$ degrees when the input is not finite. `ClampProgress` limits finite progress values to the
+range from $0$ to $1$:
 
 ```csharp
 private static float NormalizeAngle(float angle) => (float.IsFinite(angle)) ? angle % 360 : 90;
@@ -907,7 +905,7 @@ private static float ClampProgress(float progress) =>
     (float.IsFinite(progress)) ? Math.Clamp(progress, 0.0f, 1.0f) : 0.0f;
 ```
 
-In the draw method:
+The `Draw` method starts by finding the largest diameter that fits inside `dirtyRect`:
 
 ```csharp
 public void Draw(ICanvas canvas, RectF dirtyRect)
@@ -923,8 +921,7 @@ public void Draw(ICanvas canvas, RectF dirtyRect)
     ...
 ```
 
-We first calculate the diameter and then calculate the properties for all rings. To calculate this,
-we use `RingGeometry` and its `Create` method:
+We pass that diameter to `RingsGeometry.Create`, which calculates the measurements for both rings:
 
 ```csharp
 private readonly record struct RingsGeometry(
@@ -955,13 +952,12 @@ private readonly record struct RingsGeometry(
 }
 ```
 
-Based on the available space, we calculate if the requested thickness is possible, the outer ring
-radius, the inner ring radius and the space for the child content. Essentially, `contentDiameter`
-calculates the lenght of a square that fits within a circle.
+Based on the available space, we determine whether the requested thickness fits. We then calculate
+the outer radius, the inner radius, and the space for the child content. `contentDiameter` is the
+side length of the largest square that fits inside the inner circle.
 
-We now have the ring geometry and we can now tell the parent class of the drawable the available
-content space. We can do this by adding a delegate to the drawable class which is called when the
-result is available.
+The drawable must notify the owning `CircularProgressBarView` when the available content size
+changes. We do this with an event:
 
 ```csharp
 class CircularProgressBarDrawable : IDrawable
@@ -985,7 +981,8 @@ class CircularProgressBarDrawable : IDrawable
 }
 ```
 
-In the `Draw` method we then call it:
+The `Draw` method raises the event through `SetContentDiameter` whenever the calculated size
+changes:
 
 ```csharp
 public void Draw(ICanvas canvas, RectF dirtyRect)
@@ -1009,8 +1006,8 @@ public void Draw(ICanvas canvas, RectF dirtyRect)
     ...
 ```
 
-With all these parameters available we can finalize the `Draw` method to find the center of the
-canvas and draw the rings and the arcs there:
+With these measurements available, we can finish `Draw`. It finds the center of the canvas and draws
+both rings and their progress arcs:
 
 ```csharp
 public void Draw(ICanvas canvas, RectF dirtyRect)
@@ -1066,10 +1063,10 @@ public void Draw(ICanvas canvas, RectF dirtyRect)
 }
 ```
 
-Based on the `IsEnabled` property we set the alpha value of the canvas and then just draw the rings
-and the arcs.
+The `IsEnabled` property determines the canvas opacity. We then draw each track ring followed by its
+progress arc.
 
-The `DrawRing` method is quite simple, not more than we currently do:
+`DrawRing` sets the track style and draws a circle:
 
 ```csharp
 private static void DrawRing(ICanvas canvas, PointF center, float radius, Color trackColor)
@@ -1082,7 +1079,7 @@ private static void DrawRing(ICanvas canvas, PointF center, float radius, Color 
 }
 ```
 
-and the `DrawProgressArc` is a little bit more code but not really much more complicated:
+`DrawProgressArc` also handles empty and complete progress as special cases:
 
 ```csharp
 private static void DrawProgressArc(
@@ -1123,23 +1120,25 @@ private static void DrawProgressArc(
 }
 ```
 
-Essentially we just check if the progress is $0$, then we are done and draw nothing, if it is larger
-or equal to $1$, then we just draw a circle over the existing circle or in the other cases, we draw
-an arc from the start angle to the end angle. In `DrawArc` the first boolean `true` means that we
-draw clockwise and the second boolean `false` tells that the arc is not a closed area.
+When progress is $0$, there is nothing to draw. When it is $1$ or greater, we draw a complete circle
+over the track. For values in between, we draw an arc from the start angle to the calculated end
+angle. In `DrawArc`, the first boolean value, `true`, selects a clockwise arc. The second value,
+`false`, leaves the arc open.
 
-In `CircularProgressBar.xaml.cs` we declare all the bindable properties and their backing
-properties. We then need some methods to wire up the piping:
+In `CircularProgressBarView.xaml.cs`, we declare the bindable properties and their C# wrappers. We
+also keep references to the controls that we retrieve from the template:
 
 ```csharp
-public partial class CircularProgressBar : ContentView
+namespace CircularProgressBar.Mobile.Controls;
+
+public partial class CircularProgressBarView : ContentView
 {
-    // ... all bindable properties and backing properties ...
+    // ... bindable properties and their C# wrappers ...
 
     private CircularProgressBarDrawable? _drawable;
     private GraphicsView? _graphicsView;
 
-    public CircularProgressBar()
+    public CircularProgressBarView()
     {
         PropertyChanged += OnViewPropertyChanged;
 
@@ -1159,8 +1158,9 @@ public partial class CircularProgressBar : ContentView
 }
 ```
 
-Like before, we set the template and initialize the drawable with the relevant properties and the
-delegate:
+As before, the constructor selects the template. `OnApplyTemplate` retrieves the named elements from
+that template and initializes the drawable. `ReplaceDrawable` passes the current ring settings to a
+new drawable and subscribes to its `ContentDiameterChanged` event:
 
 ```csharp
 private void ReplaceDrawable()
@@ -1192,10 +1192,26 @@ private void ReplaceDrawable()
 }
 ```
 
-The callback `OnContentDiameterChanged` tells the UI thread to be aware of changes in the available
-size for the child content.
+The drawable raises `ContentDiameterChanged` from its drawing code. The callback dispatches the UI
+update and applies the calculated size to the child-content container:
 
-The `UpdateDrawable` is nearly unchanged:
+```csharp
+private void OnContentDiameterChanged(float contentDiameter)
+{
+    Dispatcher.Dispatch(() =>
+    {
+        if (_centerContentContainer is null)
+        {
+            return;
+        }
+
+        _centerContentContainer.HeightRequest = contentDiameter;
+        _centerContentContainer.WidthRequest = contentDiameter;
+    });
+}
+```
+
+`UpdateDrawable` remains almost unchanged:
 
 ```csharp
 private void UpdateDrawable()
@@ -1211,14 +1227,13 @@ private void UpdateDrawable()
 }
 ```
 
-To make use of the general `IsEnabled` property, the constructor has registered a callback for
-changed properties:
+The constructor also registers a callback for changes to the inherited `IsEnabled` property:
 
 ```csharp
 PropertyChanged += OnViewPropertyChanged;
 ```
 
-There we just check if the `IsEnabled` property is changed:
+The callback updates the drawable when `IsEnabled` changes:
 
 ```csharp
 private void OnViewPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -1230,13 +1245,50 @@ private void OnViewPropertyChanged(object? sender, System.ComponentModel.Propert
 }
 ```
 
-In the XAML of the control are no changes. It's a `GraphicsView` and a `ContentPresenter` in a
-template.
+Finally, update the template in `CircularProgressBarView.xaml`. The consumer of the control now
+determines its overall size, so the graphics view fills the available area. The named grid receives
+the size calculated by the drawable and clips child content that extends beyond that area:
+
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+  xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+  x:Class="CircularProgressBar.Mobile.Controls.CircularProgressBarView"
+>
+  <ContentView.Resources>
+    <ControlTemplate x:Key="CircularProgressBarTemplate">
+      <Grid>
+        <GraphicsView
+          x:Name="GraphicsView"
+          HorizontalOptions="Fill"
+          VerticalOptions="Fill"
+          ZIndex="0"
+        />
+
+        <Grid
+          x:Name="CenterContentContainer"
+          HorizontalOptions="Center"
+          VerticalOptions="Center"
+          IsClippedToBounds="True"
+          ZIndex="1"
+        >
+          <ContentPresenter />
+        </Grid>
+      </Grid>
+    </ControlTemplate>
+  </ContentView.Resources>
+</ContentView>
+```
 
 With some other controls to set the properties, it's working and looks like:
 
-![complete](https://private-user-images.githubusercontent.com/72554879/637699137-71714c0e-e9a5-4d7f-b64d-11f01dc34f9e.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODc1MDQ4MTMsIm5iZiI6MTc4NzUwNDUxMywicGF0aCI6Ii83MjU1NDg3OS82Mzc2OTkxMzctNzE3MTRjMGUtZTlhNS00ZDdmLWI2NGQtMTFmMDFkYzM0ZjllLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA4MjMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwODIzVDE3MDE1M1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTVmMjEwMGVhNWE4YTUxMmU5ZWZkYTM0YTIzZTk3NGY2NDA2NjAxMDQ1NmEyZWQ1YjljMjEwNWIwZGRhMThiYjYmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.i_hIg8NKKyLftEI0RApX54owPkRJQFYhF8N1pqscsWk)
+![Finalized custom control with child control](/diagrams/dotnet-maui-graphics-control/complete.png)
 
-I have published the custom control on [github](https://github.com/visviva/CircularProgressBar.Maui)
-and [nuget](https://www.nuget.org/packages/CircularProgressBar.Maui). Feel free to take a look at
-the code.
+The [published GitHub project](https://github.com/visviva/CircularProgressBar.Maui) refines this
+tutorial code for use as a library. It renames the control to `CircularProgressBar`, moves it to the
+`CircularProgressBar.Maui` namespace, narrows implementation types with `internal` and `sealed`, and
+uses read-only bindable properties with `TemplateBinding` for the calculated content size. Those
+changes improve the package API, but the underlying drawing and templating approach remains the
+same. You can also install the finished control from
+[NuGet](https://www.nuget.org/packages/CircularProgressBar.Maui).
