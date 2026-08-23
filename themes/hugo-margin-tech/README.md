@@ -18,7 +18,7 @@ A restrained Hugo theme for technical writing.
 - Automatic dark mode plus a persisted manual light/dark switch
 - Soft One Dark Pro-inspired dark palette and restrained light palette
 - Theme-aware Chroma syntax highlighting without inline Monokai styles
-- Self-hosted Source Sans 3 headings, Source Serif 4 prose, and Fira Code code typography
+- Self-hosted Source Serif 4 headings, Source Sans 3 prose, and Fira Code code typography
 
 ## Install
 
@@ -77,8 +77,8 @@ This approach does not require the online draw.io viewer.
 
 The theme self-hosts variable WOFF2 fonts and uses `font-display: swap` with system fallbacks:
 
-- Source Sans 3 for headings, navigation, and interface text;
-- Source Serif 4 for article prose, including a real italic face;
+- Source Serif 4 for headings;
+- Source Sans 3 for article prose, navigation, and interface text;
 - Fira Code for code blocks, inline code, dates, and other monospaced metadata.
 
 The redistributed font licenses are stored in `static/fonts/licenses/`.

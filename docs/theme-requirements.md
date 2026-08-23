@@ -549,12 +549,12 @@ The theme shall differentiate prose and code clearly.
 
 It shall use:
 
-- Source Sans 3 for headings, navigation, and interface text;
-- Source Serif 4 for long-form prose;
+- Source Serif 4 for headings;
+- Source Sans 3 for long-form prose, navigation, and interface text;
 - Fira Code for source code, inline code, dates, and monospaced metadata.
 
 The fonts shall be self-hosted as variable WOFF2 files, use `font-display: swap`, and retain suitable
-system-font fallbacks. A real Source Serif 4 italic face shall be provided for emphasized prose.
+system-font fallbacks.
 
 Typography shall maintain readable line height and paragraph spacing.
 
