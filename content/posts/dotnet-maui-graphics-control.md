@@ -2,7 +2,7 @@
 title = "Circular Progress Bars in .NET MAUI"
 description = "Learn how to create a reusable custom UI control with an embedded GraphicsView and child content in .NET MAUI 10"
 date = "2026-08-23"
-draft = true
+draft = false
 tags = ["c#", "xaml", "dotnet", "maui"]
 math = true
 +++
