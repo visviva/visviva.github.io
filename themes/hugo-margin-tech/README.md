@@ -7,7 +7,7 @@ A restrained Hugo theme for technical writing.
 - Home page with author bio and posts grouped by year
 - Vertically stacked home-page bio and archive
 - Hugo tag taxonomy and tag index
-- About / normal content pages
+- Imprint and privacy / normal content pages
 - Three-column desktop post layout: sticky TOC, article, margin notes
 - Non-sticky, marker-free margin notes aligned with their references and inline on small screens
 - Active TOC section highlighting

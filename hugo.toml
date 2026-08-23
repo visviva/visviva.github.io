@@ -1,6 +1,6 @@
 baseURL = 'https://visviva.github.io/'
 locale = 'en-us'
-title = 'My blog about stuff that I do and find interesting'
+title = "visviva's blog about software engineering, programming, and other stuff"
 theme = 'hugo-margin-tech'
 
 [markup]
@@ -18,10 +18,3 @@ name = 'Simon Lauser'
 bio = 'I am a software engineer. I like to write about stuff that I do and find interesting.'
 monoDarkIcon = true
 math = true
-
-[menu]
-[[menu.main]]
-identifier = 'about'
-name = 'About'
-url = '/about/'
-weight = 10

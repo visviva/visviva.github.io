@@ -8,12 +8,13 @@ math = true
 +++
 
 This draft is a compact authoring reference for the theme. It includes enough headings to populate
-the table of contents, and its tags link back to Hugo's taxonomy pages. {{< note >}}Margin notes sit beside their reference on wide screens and move inline on smaller
-screens. They support **Markdown**, links, and `inline code`.{{< /note >}}
+the table of contents, and its tags link back to Hugo's taxonomy pages. {{< note >}}Margin notes sit
+beside their reference on wide screens and move inline on smaller screens. They support
+**Markdown**, links, and `inline code`.{{< /note >}}
 
 ## Prose and structure
 
-Regular paragraphs can contain **strong text**, *emphasis*, [links](https://gohugo.io/), and
+Regular paragraphs can contain **strong text**, _emphasis_, [links](https://gohugo.io/), and
 `inline code`. A block quote is visually separated from the surrounding prose:
 
 > Good technical writing makes the important path easy to follow and keeps supporting detail close
@@ -33,12 +34,12 @@ Lists work as expected:
 
 Tables remain within the reading column:
 
-| Feature | Authoring syntax | Rendering |
-|:--|:--|:--|
-| Margin note | `note` shortcode | Right rail or inline |
-| Math | TeX delimiters | MathJax |
-| Mermaid | Fenced code block | Responsive SVG |
-| draw.io | Markdown image | Exported SVG or PNG |
+| Feature     | Authoring syntax  | Rendering            |
+| :---------- | :---------------- | :------------------- |
+| Margin note | `note` shortcode  | Right rail or inline |
+| Math        | TeX delimiters    | MathJax              |
+| Mermaid     | Fenced code block | Responsive SVG       |
+| draw.io     | Markdown image    | Exported SVG or PNG  |
 
 Fenced code blocks support Hugo syntax highlighting and horizontal scrolling for long lines:
 

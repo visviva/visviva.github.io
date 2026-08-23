@@ -1,11 +1,20 @@
 {{ define "main" }}
 <div class="shell home-grid">
-  <aside class="bio-card">
-    {{ with site.Params.role }}<p class="eyebrow">{{ . }}</p>{{ end }}
-    <h1>{{ site.Params.name | default site.Params.author }}</h1>
-    <p>{{ site.Params.bio }}</p>
-    <div class="bio-links">
-      <a href="{{ relURL "about/" }}">About</a>
+  <aside class="bio-card" aria-labelledby="about-title">
+    <div class="section-head bio-head">
+      <div>
+        <h1 id="about-title">About</h1>
+      </div>
+      <a class="quiet-link" href="{{ relURL "imprint/" }}">Imprint and Privacy →</a>
+    </div>
+    <div class="bio-body">
+      {{ with .Content }}
+        <div class="bio-content">
+          {{ . }}
+        </div>
+      {{ else }}
+        {{ with site.Params.bio }}<p>{{ . }}</p>{{ end }}
+      {{ end }}
     </div>
   </aside>
 

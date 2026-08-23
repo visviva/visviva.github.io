@@ -141,13 +141,17 @@ a:hover { color:var(--accent); }
 .theme-toggle:hover { color:var(--text); border-color:var(--muted); }
 .theme-toggle:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
 .eyebrow { margin:0 0 8px; color:var(--accent); text-transform:uppercase; letter-spacing:.11em; font:700 11px/1.2 var(--mono); }
-.home-grid { max-width:900px; display:grid; grid-template-columns:minmax(0,1fr); gap:clamp(64px,9vw,112px); padding-block:92px 120px; }
-.bio-card { align-self:start; text-align:center; }
-.bio-card h1 { margin:0 0 16px; font-size:clamp(30px,4vw,46px); line-height:1; }
-.bio-card p:not(.eyebrow) { color:var(--muted); max-width:32ch; margin-inline:auto; }
-.bio-links { display:flex; justify-content:center; flex-wrap:wrap; gap:14px; margin-top:22px; font-size:14px; }
-.section-head { display:flex; align-items:center; flex-direction:column; text-align:center; gap:12px; margin-bottom:36px; }
-.section-head h2,.listing-header h1 { margin:0; font-size:clamp(34px,5vw,58px); line-height:1; }
+.home-grid { max-width:900px; display:grid; grid-template-columns:minmax(0,1fr); gap:clamp(48px,7vw,72px); padding-block:72px 120px; }
+.bio-card { width:100%; align-self:start; text-align:left; }
+.bio-card h1,.section-head h2 { margin:0; font-size:clamp(32px,4vw,44px); line-height:1; }
+.bio-head { padding-bottom:28px; border-bottom:1px solid var(--line); }
+.bio-body { width:min(100%,550px); margin:0 auto; text-align:justify; hyphens:auto; }
+.bio-card p:not(.eyebrow) { color:var(--text); max-width:none; margin-inline:0; font-size:18px; line-height:1.7; }
+.bio-content { margin-top:0; }
+.bio-content > :first-child { margin-top:0; }
+.bio-content > :last-child { margin-bottom:0; }
+.section-head { display:flex; align-items:flex-end; justify-content:space-between; text-align:left; gap:24px; margin-bottom:28px; }
+.listing-header h1 { margin:0; font-size:clamp(34px,5vw,58px); line-height:1; }
 .quiet-link { color:var(--muted); font-size:14px; }
 .year-group { display:grid; grid-template-columns:90px 1fr; gap:24px; border-top:1px solid var(--line); padding:30px 0 18px; }
 .year { margin:3px 0 0; font:600 13px/1 var(--mono); color:var(--muted); }
@@ -258,6 +262,7 @@ a:hover { color:var(--accent); }
 }
 @media (max-width:520px) {
   .site-nav { gap:14px; }
+  .section-head { align-items:flex-start; flex-direction:column; gap:10px; }
   .post-row,.post-list.wide .post-row { grid-template-columns:1fr; gap:5px; }
   .post-row-meta { padding:0; }
   .post-row-meta time,.post-row-meta span { display:inline; }

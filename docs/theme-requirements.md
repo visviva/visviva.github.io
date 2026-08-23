@@ -17,7 +17,7 @@ The theme shall consist primarily of:
 
 1. an index/home page;
 2. post archive and taxonomy navigation;
-3. an About page;
+3. an Imprint and Privacy page;
 4. individual article pages with a three-column layout.
 
 ---
@@ -57,14 +57,16 @@ The theme shall support the following primary pages:
 │   └── Individual Post
 ├── Tags
 │   └── Tag Archive
-└── About
+└── Imprint and Privacy
 ```
 
 The primary site navigation shall provide access to at least:
 
 - Home;
-- About;
 - Tags or another equivalent way to browse posts by topic.
+
+The Imprint and Privacy page shall remain accessible from the About section on the home page rather
+than from the primary site navigation.
 
 Additional navigation items may be configurable by the site owner.
 
@@ -80,8 +82,18 @@ archive.
 The biography and archive shall be vertically stacked, with the biography appearing first and the
 archive following it. They shall not appear as side-by-side columns on wide screens.
 
-The biography and the archive heading shall be centered within a shared, constrained home-page
-column. Individual archive entries may remain left-aligned for readability.
+The biography and archive shall share a constrained home-page column. Their headings shall be
+left-aligned. The narrower biography text block shall be horizontally centered within that column,
+use a maximum width of approximately 640 pixels, and use justified paragraph text. The introduction
+shall use readable body text and the author name shall not dominate the page's visual hierarchy.
+
+The biography shall display `About` as its primary heading using the same typography and size as
+the `Writing` heading. A horizontal divider shall separate the About heading from the centered text
+block. The theme shall not display the author name separately above the biography content; it may
+instead be included naturally within the home-page Markdown.
+
+The About header shall display a quiet link to the Imprint and Privacy page on its right, matching
+the placement and styling of the tag-browsing link in the Writing header.
 
 ### 4.2 Biography
 
@@ -95,6 +107,11 @@ The biography should support:
 - optional links such as GitHub, email, LinkedIn, Mastodon, RSS, or a personal project page.
 
 The biography content shall be configurable rather than hard-coded in the theme.
+
+The theme shall render the Markdown content of the home page's `content/_index.md` file below the
+author name. This content may be used for a longer description of the author, the blog, or both. If
+the home page has no Markdown content, the theme shall fall back to the short biography configured
+through site parameters instead of displaying both descriptions.
 
 ### 4.3 Post Listing
 
@@ -184,22 +201,25 @@ Each tag shall link to the corresponding tag archive.
 
 ---
 
-## 6. About Page
+## 6. Imprint and Privacy Page
 
-The theme shall provide an About page suitable for a longer personal biography.
+The theme shall provide an Imprint and Privacy page suitable for legal, contact, privacy, and
+third-party license information.
 
 The page shall use normal Hugo content so that the site owner can author it in Markdown.
 
 Typical content may include:
 
-- biography;
-- professional background;
-- areas of interest;
-- projects;
+- site owner or publisher information;
 - contact information;
-- links to external profiles.
+- legally required disclosures;
+- hosting and third-party resource information;
+- local browser storage and email-contact processing;
+- data-subject rights;
+- third-party license notices.
 
-The About page does not require the three-column article layout unless explicitly enabled.
+The Imprint and Privacy page does not require the three-column article layout unless explicitly
+enabled.
 
 ---
 
@@ -470,7 +490,6 @@ It shall support:
 
 - site title or author name;
 - link to the home page;
-- link to About;
 - access to tags;
 - optional configurable navigation links.
 
@@ -490,6 +509,8 @@ A simple footer shall be provided.
 
 The copyright name shall use `params.name` from the active site's `hugo.toml` (with legacy
 `params.author` accepted only as a fallback).
+
+The footer shall link to the Imprint and Privacy page.
 
 It may contain:
 
@@ -698,7 +719,7 @@ The theme shall include an example site demonstrating its main features.
 The example content shall include:
 
 - a home-page biography;
-- an About page;
+- an Imprint and Privacy page;
 - posts spanning multiple years;
 - multiple tags;
 - an article with several headings;
@@ -774,15 +795,18 @@ dependency emerges.
 The initial version of the theme shall be considered complete when all of the following are true:
 
 - [ ] A Hugo site can enable the theme and render successfully.
-- [ ] The home page displays a configurable biography.
+- [ ] The home page displays Markdown content from `content/_index.md`, with the configured short
+  biography as a fallback.
 - [ ] The biography appears above the archive rather than beside it.
-- [ ] The biography and archive heading are centered within the home-page column.
+- [ ] The About and Writing headings are left-aligned.
+- [ ] The biography text block is horizontally centered with justified paragraph text.
+- [ ] The About and Writing headings use the same typography and size.
 - [ ] The home page displays published posts.
 - [ ] Posts are grouped by publication year.
 - [ ] Years and posts are shown newest first.
 - [ ] Posts support Hugo tags.
 - [ ] Clicking a tag displays the corresponding post archive.
-- [ ] An About page can be written in Markdown.
+- [ ] An Imprint and Privacy page can be written in Markdown.
 - [ ] Article pages display a generated TOC on desktop.
 - [ ] The TOC remains visible while scrolling long articles.
 - [ ] Article pages show a reading-progress indicator below the sticky header.
@@ -798,6 +822,7 @@ The initial version of the theme shall be considered complete when all of the fo
 - [ ] Exported draw.io SVG or PNG files work as standard Markdown images without an online viewer.
 - [ ] Configured social links appear in the top header.
 - [ ] The footer copyright uses `params.name` from the site configuration.
+- [ ] The footer links to the Imprint and Privacy page.
 - [ ] A persisted, keyboard-accessible light/dark mode switch is available in the header.
 - [ ] Article pages do not require page-level horizontal scrolling on mobile.
 - [ ] Long articles remain readable across desktop and mobile layouts.

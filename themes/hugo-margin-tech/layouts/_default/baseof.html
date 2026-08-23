@@ -28,7 +28,6 @@
         <nav class="site-nav" aria-label="Primary">
           <a href="{{ site.Home.RelPermalink }}">Posts</a>
           <a href="{{ relURL "tags/" }}">Tags</a>
-          <a href="{{ relURL "about/" }}">About</a>
         </nav>
         <div class="header-utilities">
           {{ partial "social-links.html" . }}
@@ -47,6 +46,7 @@
   <main>{{ block "main" . }}{{ end }}</main>
   <footer class="site-footer shell">
     <span>© {{ now.Year }} {{ site.Params.name | default site.Params.author }}</span>
+    <a href="{{ relURL "imprint/" }}">Imprint and Privacy</a>
     <span>Built with Hugo.</span>
   </footer>
   {{ with resources.Get "js/main.js" | minify | fingerprint }}<script defer src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>{{ end }}
