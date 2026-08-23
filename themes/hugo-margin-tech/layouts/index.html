@@ -25,7 +25,10 @@
         <div class="post-list">
           {{ range .Pages }}
             <article class="post-row">
-              <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 02" }}</time>
+              <div class="post-row-meta">
+                <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 02" }}</time>
+                <span>{{ .ReadingTime }} min read</span>
+              </div>
               <div>
                 <h4><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h4>
                 {{ with .Description }}<p>{{ . }}</p>{{ end }}

@@ -11,6 +11,8 @@ A restrained Hugo theme for technical writing.
 - Three-column desktop post layout: sticky TOC, article, margin notes
 - Non-sticky, marker-free margin notes aligned with their references and inline on small screens
 - Active TOC section highlighting
+- Article reading progress below the sticky header
+- Automatic Hugo reading-time estimates on articles and post listings
 - Syntax-highlight friendly code blocks
 - MathJax equations and Mermaid fenced code blocks
 - Standard Markdown images for exported draw.io diagrams
@@ -43,6 +45,8 @@ On narrower layouts, clicking the numbered marker reveals the note inline.
 ## Content
 
 Posts live under `content/posts/` and should have `date`, `description`, and optional `tags` front matter.
+Hugo calculates each post's reading time from its content, so authors do not need to maintain a
+reading-length value in front matter.
 
 ## Identity and social links
 

@@ -20,7 +20,8 @@
   {{ with resources.Get "css/main.css" | minify | fingerprint }}<link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}">{{ end }}
 </head>
 <body>
-  <header class="site-header">
+  {{ $hasReadingProgress := and .IsPage (eq .Section "posts") }}
+  <header class="site-header{{ if $hasReadingProgress }} has-reading-progress{{ end }}">
     <div class="shell header-inner">
       <a class="site-name" href="{{ site.Home.RelPermalink }}">{{ site.Title }}</a>
       <div class="header-links">
@@ -37,6 +38,11 @@
         </div>
       </div>
     </div>
+    {{ if $hasReadingProgress }}
+      <div class="reading-progress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-reading-progress>
+        <span class="reading-progress-bar" data-reading-progress-bar></span>
+      </div>
+    {{ end }}
   </header>
   <main>{{ block "main" . }}{{ end }}</main>
   <footer class="site-footer shell">

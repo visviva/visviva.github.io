@@ -111,6 +111,10 @@ It should additionally support:
 - short description or summary;
 - estimated reading time.
 
+The reading-time estimate shall be calculated automatically from the post content using Hugo's
+built-in reading-time metadata. Authors shall not need to maintain it in front matter. The estimate
+shall be visible on the article page and in post listings.
+
 Post entries shall link to the full article.
 
 ### 4.4 Ordering by Year
@@ -222,6 +226,15 @@ The columns shall have distinct purposes:
 - **right:** contextual notes and remarks.
 
 The center column shall remain the visual focus of the page.
+
+### 7.2 Reading Progress
+
+Individual article pages shall display a slim reading-progress indicator directly below the sticky
+site header. It shall advance as the reader scrolls through the article and reach completion at the
+end of the article content.
+
+The indicator shall expose its current percentage to assistive technology. Because it is a
+progressive enhancement, the article shall remain fully readable when JavaScript is unavailable.
 
 ---
 
@@ -772,6 +785,8 @@ The initial version of the theme shall be considered complete when all of the fo
 - [ ] An About page can be written in Markdown.
 - [ ] Article pages display a generated TOC on desktop.
 - [ ] The TOC remains visible while scrolling long articles.
+- [ ] Article pages show a reading-progress indicator below the sticky header.
+- [ ] Reading time is calculated automatically and displayed on articles and post listings.
 - [ ] Article content occupies the central reading column.
 - [ ] Authors can add right-margin notes through a shortcode.
 - [ ] Margin notes appear beside article content on wide screens.
@@ -820,7 +835,6 @@ Possible later additions include:
 - full-text search;
 - series or collections of related posts;
 - previous/next article navigation;
-- reading progress indicator;
 - copy buttons for code blocks;
 - richer footnote and citation support;
 - configurable margin-note numbering;

@@ -30,6 +30,40 @@
   });
   updateThemeToggle();
 
+  const readingProgress = document.querySelector('[data-reading-progress]');
+  const readingProgressBar = readingProgress?.querySelector('[data-reading-progress-bar]');
+  const article = document.querySelector('.article-main');
+  let progressFrame;
+  let lastProgress = -1;
+
+  const updateReadingProgress = () => {
+    cancelAnimationFrame(progressFrame);
+    progressFrame = requestAnimationFrame(() => {
+      if (!readingProgress || !readingProgressBar || !article) return;
+
+      const headerHeight = document.querySelector('.site-header')?.offsetHeight ?? 0;
+      const articleTop = article.getBoundingClientRect().top + window.scrollY;
+      const start = articleTop - headerHeight;
+      const end = articleTop + article.offsetHeight - window.innerHeight;
+      const distance = Math.max(end - start, 1);
+      const ratio = Math.min(Math.max((window.scrollY - start) / distance, 0), 1);
+      const percentage = Math.round(ratio * 100);
+
+      readingProgressBar.style.transform = `scaleX(${ratio})`;
+      if (percentage !== lastProgress) {
+        readingProgress.setAttribute('aria-valuenow', String(percentage));
+        lastProgress = percentage;
+      }
+    });
+  };
+
+  if (readingProgress && readingProgressBar && article) {
+    updateReadingProgress();
+    window.addEventListener('scroll', updateReadingProgress, { passive: true });
+    window.addEventListener('resize', updateReadingProgress);
+    window.addEventListener('load', updateReadingProgress);
+  }
+
   const headings = [...document.querySelectorAll('.prose h2[id], .prose h3[id]')];
   const tocLinks = [...document.querySelectorAll('.toc-rail a[href^="#"]')];
   const linkById = new Map(tocLinks.map(a => [decodeURIComponent(a.hash.slice(1)), a]));

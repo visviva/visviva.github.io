@@ -8,7 +8,10 @@
   <div class="post-list wide">
     {{ range .Pages.ByDate.Reverse }}
       <article class="post-row">
-        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006 · Jan 02" }}</time>
+        <div class="post-row-meta">
+          <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006 · Jan 02" }}</time>
+          <span>{{ .ReadingTime }} min read</span>
+        </div>
         <div>
           <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
           {{ with .Description }}<p>{{ . }}</p>{{ end }}
