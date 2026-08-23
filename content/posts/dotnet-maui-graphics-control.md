@@ -20,6 +20,7 @@ control template. You should be familiar with basic C# and XAML, but you do not 
 custom drawing.
 
 ![Example design of the control](/diagrams/dotnet-maui-graphics-control/goal-control.drawio.svg)
+{style="width: 45%; min-width: min(100%, 280px);"}
 
 The design consists of two circles and two arcs. For the child controls, we need to calculate the
 area within the inner circle and clip the content if needed.
@@ -189,6 +190,7 @@ increases it by $5$.
 Running the app reveals:
 
 ![Some circles on a graphics view](/diagrams/dotnet-maui-graphics-control/some-circles-1.png)
+{style="width: 50%; min-width: min(100%, 300px);"}
 
 Nice, we have drawn circles! We now know how to draw on the canvas. The remaining work is to
 calculate the geometry for our custom control.
@@ -361,6 +363,7 @@ Then add the slider and bind its value to our custom control in `MainPage.xaml`:
 Everything builds and runs so far, but the result is not quite right.
 
 ![Changeable circles on a graphics view](/diagrams/dotnet-maui-graphics-control/some-circles-2.png)
+{style="width: 60%; min-width: min(100%, 320px);"}
 
 Moving the slider does not change the number of circles. At startup, the slider is set to $20$, but
 many more circles appear. What is happening?
@@ -459,6 +462,7 @@ Let's start by adding a child to our control in `MainPage.xaml`:
 When we run the application, the label completely replaces the graphics view.
 
 ![Label replacing the graphics view](/diagrams/dotnet-maui-graphics-control/some-circles-3.png)
+{style="width: 75%; min-width: min(100%, 320px);"}
 
 The documentation for `ContentProperty` explains this behavior. The label is assigned to the custom
 control's inherited `Content` property, replacing the graphics view. To prevent that, we use
@@ -544,6 +548,7 @@ control which element appears on top.
 The child content now appears above the graphics view.
 
 ![Custom control with child control](/diagrams/dotnet-maui-graphics-control/some-circles-4.png)
+{style="width: 50%; min-width: min(100%, 300px);"}
 
 ### Option B: Using control templates
 
@@ -841,6 +846,7 @@ To make this work, set the template on our custom view in `MainPage.xaml`:
 The templated control now works.
 
 ![Custom control with child control](/diagrams/dotnet-maui-graphics-control/some-circles-4.png)
+{style="width: 50%; min-width: min(100%, 300px);"}
 
 However, the API of our custom control is not ideal. Its consumers should not have to select the
 control template because that template is an implementation detail. Let's revert the change in
@@ -1284,6 +1290,7 @@ the size calculated by the drawable and clips child content that extends beyond 
 With some other controls to set the properties, it's working and looks like:
 
 ![Finalized custom control with child control](/diagrams/dotnet-maui-graphics-control/complete.png)
+{style="width: 60%; min-width: min(100%, 320px);"}
 
 The [published GitHub project](https://github.com/visviva/CircularProgressBar.Maui) refines this
 tutorial code for use as a library. It renames the control to `CircularProgressBar`, moves it to the

@@ -4,6 +4,10 @@ title = 'My blog about stuff that I do and find interesting'
 theme = 'hugo-margin-tech'
 
 [markup]
+[markup.goldmark.parser]
+wrapStandAloneImageWithinParagraph = false
+[markup.goldmark.parser.attribute]
+block = true
 [markup.highlight]
 noClasses = false
 lineNos = false
