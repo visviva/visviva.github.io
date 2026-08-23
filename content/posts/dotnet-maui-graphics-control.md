@@ -875,3 +875,368 @@ Running the application again shows that it is working and the API stays clean.
 Now we know how to create a custom control with child controls. We know how to draw circles and we
 also know how to pipe all of the part with each other. Let's complete the control and add the
 circles and the arcs.
+
+We first start with the most interesting part, the drawable. The public API of the drawable is a
+record for the immutable properties of the rings:
+
+```csharp
+public readonly record struct RingProperties(
+    float RingThickness,
+    float RingSpacing,
+    float StartAngle,
+    float DisabledOpacity,
+    Color TrackColor,
+    Color ProgressColor
+);
+```
+
+The other dynamic properties of the Drawable are modeled as properties of the drawable:
+
+```csharp
+public float InnerProgress { get; set; }
+public float OuterProgress { get; set; }
+public bool IsEnabled { get; set; } = true;
+```
+
+We also need two utility methods to keep the angle within $360$ degrees or set it to $90$ degress by
+default and to clamp the progress within $0$ and $1$:
+
+```csharp
+private static float NormalizeAngle(float angle) => (float.IsFinite(angle)) ? angle % 360 : 90;
+private static float ClampProgress(float progress) =>
+    (float.IsFinite(progress)) ? Math.Clamp(progress, 0.0f, 1.0f) : 0.0f;
+```
+
+In the draw method:
+
+```csharp
+public void Draw(ICanvas canvas, RectF dirtyRect)
+{
+    var diameter = Math.Min(dirtyRect.Width, dirtyRect.Height);
+
+    var ringGeometry = RingsGeometry.Create(
+        diameter,
+        _ringProperties.RingThickness,
+        _ringProperties.RingSpacing
+    );
+
+    ...
+```
+
+We first calculate the diameter and then calculate the properties for all rings. To calculate this,
+we use `RingGeometry` and its `Create` method:
+
+```csharp
+private readonly record struct RingsGeometry(
+    float Thickness,
+    float OuterRadius,
+    float InnerRadius,
+    float ContentDiameter
+)
+{
+    public static RingsGeometry Create(float diameter, float requestedThickness, float requestedSpacing)
+    {
+        float availableRadius = diameter / 2;
+        float thickness = Math.Min(SanitizeLength(requestedThickness), availableRadius / 2);
+        float remainingRadius = Math.Max(0, availableRadius - (2 * thickness));
+        float spacing = Math.Min(SanitizeLength(requestedSpacing), remainingRadius);
+        float outerRadius = Math.Max(0, availableRadius - (thickness / 2));
+        float innerRadius = Math.Max(0, outerRadius - thickness - spacing);
+        float contentDiameter = Math.Max(
+            0,
+            (float)((diameter - (4 * thickness) - (2 * spacing)) / Math.Sqrt(2.0))
+        );
+        return new RingsGeometry(thickness, outerRadius, innerRadius, contentDiameter);
+    }
+    private static float SanitizeLength(float value)
+    {
+        return (float.IsFinite(value) && value > 0) ? value : 0;
+    }
+}
+```
+
+Based on the available space, we calculate if the requested thickness is possible, the outer ring
+radius, the inner ring radius and the space for the child content. Essentially, `contentDiameter`
+calculates the lenght of a square that fits within a circle.
+
+We now have the ring geometry and we can now tell the parent class of the drawable the available
+content space. We can do this by adding a delegate to the drawable class which is called when the
+result is available.
+
+```csharp
+class CircularProgressBarDrawable : IDrawable
+{
+    public event Action<float>? ContentDiameterChanged;
+
+    public float ContentDiameter { get; private set; } = 0.0f;
+
+    private void SetContentDiameter(float contentDiameter)
+    {
+        if (ContentDiameter.Equals(contentDiameter))
+        {
+            return;
+        }
+
+        ContentDiameter = contentDiameter;
+        ContentDiameterChanged?.Invoke(contentDiameter);
+    }
+
+    ...
+}
+```
+
+In the `Draw` method we then call it:
+
+```csharp
+public void Draw(ICanvas canvas, RectF dirtyRect)
+{
+    var diameter = Math.Min(dirtyRect.Width, dirtyRect.Height);
+
+    var ringGeometry = RingsGeometry.Create(
+        diameter,
+        _ringProperties.RingThickness,
+        _ringProperties.RingSpacing
+    );
+
+    if (ringGeometry.Thickness <= 0 || ringGeometry.ContentDiameter <= 0)
+    {
+        SetContentDiameter(0.0f);
+        return;
+    }
+
+    SetContentDiameter(ringGeometry.ContentDiameter);
+
+    ...
+```
+
+With all these parameters available we can finalize the `Draw` method to find the center of the
+canvas and draw the rings and the arcs there:
+
+```csharp
+public void Draw(ICanvas canvas, RectF dirtyRect)
+{
+    var diameter = Math.Min(dirtyRect.Width, dirtyRect.Height);
+
+    var ringGeometry = RingsGeometry.Create(
+        diameter,
+        _ringProperties.RingThickness,
+        _ringProperties.RingSpacing
+    );
+
+    if (ringGeometry.Thickness <= 0 || ringGeometry.ContentDiameter <= 0)
+    {
+        SetContentDiameter(0.0f);
+        return;
+    }
+
+    SetContentDiameter(ringGeometry.ContentDiameter);
+
+    var center = new PointF(
+        dirtyRect.Left + (dirtyRect.Width / 2),
+        dirtyRect.Top + (dirtyRect.Height / 2)
+    );
+    float startAngle = NormalizeAngle(_ringProperties.StartAngle);
+
+    canvas.SaveState();
+
+    canvas.Alpha = IsEnabled ? 1.0f : _ringProperties.DisabledOpacity;
+    canvas.StrokeSize = ringGeometry.Thickness;
+
+    DrawRing(canvas, center, ringGeometry.InnerRadius, _ringProperties.TrackColor);
+    DrawProgressArc(
+        canvas,
+        center,
+        ringGeometry.InnerRadius,
+        _ringProperties.ProgressColor,
+        InnerProgress,
+        startAngle
+    );
+
+    DrawRing(canvas, center, ringGeometry.OuterRadius, _ringProperties.TrackColor);
+    DrawProgressArc(
+        canvas,
+        center,
+        ringGeometry.OuterRadius,
+        _ringProperties.ProgressColor,
+        OuterProgress,
+        startAngle
+    );
+
+    canvas.RestoreState();
+}
+```
+
+Based on the `IsEnabled` property we set the alpha value of the canvas and then just draw the rings
+and the arcs.
+
+The `DrawRing` method is quite simple, not more than we currently do:
+
+```csharp
+private static void DrawRing(ICanvas canvas, PointF center, float radius, Color trackColor)
+{
+    canvas.SaveState();
+    canvas.StrokeLineCap = LineCap.Butt;
+    canvas.StrokeColor = trackColor;
+    canvas.DrawCircle(center, radius);
+    canvas.RestoreState();
+}
+```
+
+and the `DrawProgressArc` is a little bit more code but not really much more complicated:
+
+```csharp
+private static void DrawProgressArc(
+    ICanvas canvas,
+    PointF center,
+    float radius,
+    Color progressColor,
+    float progress,
+    float startAngle
+)
+{
+    canvas.SaveState();
+
+    canvas.StrokeLineCap = LineCap.Round;
+    canvas.StrokeColor = progressColor;
+
+    var clampedProgress = ClampProgress(progress);
+
+    switch (clampedProgress)
+    {
+        case <= 0:
+            break;
+        case >= 1.0f:
+            canvas.DrawCircle(center, radius);
+            break;
+        default:
+        {
+            float endAngle = startAngle - (clampedProgress * 360.0f);
+            float left = (center.X - radius);
+            float top = (center.Y - radius);
+            float diameter = (radius * 2.0f);
+            canvas.DrawArc(left, top, diameter, diameter, startAngle, endAngle, true, false);
+            break;
+        }
+    }
+
+    canvas.RestoreState();
+}
+```
+
+Essentially we just check if the progress is $0$, then we are done and draw nothing, if it is larger
+or equal to $1$, then we just draw a circle over the existing circle or in the other cases, we draw
+an arc from the start angle to the end angle. In `DrawArc` the first boolean `true` means that we
+draw clockwise and the second boolean `false` tells that the arc is not a closed area.
+
+In `CircularProgressBar.xaml.cs` we declare all the bindable properties and their backing
+properties. We then need some methods to wire up the piping:
+
+```csharp
+public partial class CircularProgressBar : ContentView
+{
+    // ... all bindable properties and backing properties ...
+
+    private CircularProgressBarDrawable? _drawable;
+    private GraphicsView? _graphicsView;
+
+    public CircularProgressBar()
+    {
+        PropertyChanged += OnViewPropertyChanged;
+
+        InitializeComponent();
+        ControlTemplate = Resources["CircularProgressBarTemplate"] as ControlTemplate;
+    }
+
+    protected override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+
+        _graphicsView = GetTemplateChild("GraphicsView") as GraphicsView;
+        ReplaceDrawable();
+    }
+
+    ...
+}
+```
+
+Like before, we set the template and initialize the drawable with the relevant properties and the
+delegate:
+
+```csharp
+private void ReplaceDrawable()
+{
+    if (_graphicsView is null)
+    {
+        return;
+    }
+
+    if (_drawable is not null)
+    {
+        _drawable.ContentDiameterChanged -= OnContentDiameterChanged;
+    }
+
+    _drawable = new CircularProgressBarDrawable(
+        new RingProperties(
+            RingThickness,
+            RingSpacing,
+            StartAngle,
+            DisabledOpacity,
+            TrackColor,
+            ProgressColor
+        )
+    );
+
+    _drawable.ContentDiameterChanged += OnContentDiameterChanged;
+    _graphicsView.Drawable = _drawable;
+    UpdateDrawable();
+}
+```
+
+The callback `OnContentDiameterChanged` tells the UI thread to be aware of changes in the available
+size for the child content.
+
+The `UpdateDrawable` is nearly unchanged:
+
+```csharp
+private void UpdateDrawable()
+{
+    if (_drawable is null)
+    {
+        return;
+    }
+    _drawable.InnerProgress = InnerProgress;
+    _drawable.OuterProgress = OuterProgress;
+    _drawable.IsEnabled = IsEnabled;
+    _graphicsView?.Invalidate();
+}
+```
+
+To make use of the general `IsEnabled` property, the constructor has registered a callback for
+changed properties:
+
+```csharp
+PropertyChanged += OnViewPropertyChanged;
+```
+
+There we just check if the `IsEnabled` property is changed:
+
+```csharp
+private void OnViewPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+{
+    if (e.PropertyName == nameof(IsEnabled))
+    {
+        UpdateDrawable();
+    }
+}
+```
+
+In the XAML of the control are no changes. It's a `GraphicsView` and a `ContentPresenter` in a
+template.
+
+With some other controls to set the properties, it's working and looks like:
+
+![complete](https://private-user-images.githubusercontent.com/72554879/637699137-71714c0e-e9a5-4d7f-b64d-11f01dc34f9e.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODc1MDQ4MTMsIm5iZiI6MTc4NzUwNDUxMywicGF0aCI6Ii83MjU1NDg3OS82Mzc2OTkxMzctNzE3MTRjMGUtZTlhNS00ZDdmLWI2NGQtMTFmMDFkYzM0ZjllLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA4MjMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwODIzVDE3MDE1M1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTVmMjEwMGVhNWE4YTUxMmU5ZWZkYTM0YTIzZTk3NGY2NDA2NjAxMDQ1NmEyZWQ1YjljMjEwNWIwZGRhMThiYjYmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.i_hIg8NKKyLftEI0RApX54owPkRJQFYhF8N1pqscsWk)
+
+I have published the custom control on [github](https://github.com/visviva/CircularProgressBar.Maui)
+and [nuget](https://www.nuget.org/packages/CircularProgressBar.Maui). Feel free to take a look at
+the code.
