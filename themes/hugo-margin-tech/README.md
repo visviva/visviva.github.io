@@ -14,7 +14,7 @@ A restrained Hugo theme for technical writing.
 - Article reading progress below the sticky header
 - Automatic Hugo reading-time estimates on articles and post listings
 - Syntax-highlight friendly code blocks
-- MathJax equations and Mermaid fenced code blocks
+- Self-hosted MathJax equations and Mermaid fenced code blocks
 - Standard Markdown images for exported draw.io diagrams
 - Configurable social links in the site header
 - Automatic dark mode plus a persisted manual light/dark switch
@@ -67,6 +67,11 @@ flowchart LR
   Markdown --> Hugo --> HTML
 ```
 ````
+
+The theme serves pinned MathJax 3.2.2 and Mermaid 11.17.0 browser distributions from
+`static/vendor/`. Neither renderer contacts a third-party CDN. MathJax loads only on pages where
+math is enabled, and Mermaid loads only on pages containing a Mermaid block. Their redistributed
+licences are stored beside the corresponding runtime files.
 
 Export draw.io diagrams to SVG or PNG, place them under the site's `static/` directory, and include
 them as normal Markdown images:

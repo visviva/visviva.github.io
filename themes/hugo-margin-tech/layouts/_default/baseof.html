@@ -58,31 +58,17 @@
           displayMath: [['$$', '$$'], ['\\[', '\\]']],
           processEscapes: true
         },
-        options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] }
+        options: {
+          enableMenu: false,
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
       };
     </script>
-    <script defer id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script defer id="MathJax-script" src="{{ "vendor/mathjax-3.2.2/tex-mml-chtml.js" | relURL }}"></script>
   {{ end }}
   {{ if .Store.Get "hasMermaid" }}
-    <script type="module">
-      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-      const diagrams = [...document.querySelectorAll('.mermaid')];
-      diagrams.forEach(diagram => { diagram.dataset.mermaidSource = diagram.textContent; });
-
-      const renderDiagrams = async () => {
-        const dark = document.documentElement.dataset.theme === 'dark' ||
-          (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: dark ? 'dark' : 'neutral' });
-        diagrams.forEach(diagram => {
-          diagram.removeAttribute('data-processed');
-          diagram.textContent = diagram.dataset.mermaidSource;
-        });
-        await mermaid.run({ nodes: diagrams });
-      };
-
-      await renderDiagrams();
-      window.addEventListener('themechange', renderDiagrams);
-    </script>
+    <script defer src="{{ "vendor/mermaid-11.17.0/mermaid.min.js" | relURL }}"></script>
+    {{ with resources.Get "js/mermaid.js" | minify | fingerprint }}<script defer src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>{{ end }}
   {{ end }}
 </body>
 </html>

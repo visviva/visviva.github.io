@@ -1,6 +1,6 @@
 baseURL = 'https://visviva.github.io/'
 locale = 'en-us'
-title = "visviva's blog about software engineering, programming, and other stuff"
+title = "visviva's blog"
 theme = 'hugo-margin-tech'
 
 [markup]

@@ -370,6 +370,10 @@ Articles shall support Mermaid diagrams authored as fenced `mermaid` code blocks
 Mermaid runtime shall only be loaded on pages that contain such a block. Before or without
 JavaScript rendering, the diagram source shall remain readable.
 
+MathJax and Mermaid shall be served from versioned, self-hosted theme resources. Rendering
+mathematics or diagrams shall not cause the visitor's browser to contact a third-party CDN. The
+redistributed software licences shall be included with the corresponding runtime files.
+
 ---
 
 ## 10. Right Column — Notes and Remarks
@@ -819,6 +823,7 @@ The initial version of the theme shall be considered complete when all of the fo
 - [ ] Code blocks render without breaking the page layout.
 - [ ] Math renders when enabled globally or in page front matter.
 - [ ] Fenced Mermaid blocks render as diagrams.
+- [ ] MathJax and Mermaid load from self-hosted, versioned paths without third-party CDN requests.
 - [ ] Exported draw.io SVG or PNG files work as standard Markdown images without an online viewer.
 - [ ] Configured social links appear in the top header.
 - [ ] The footer copyright uses `params.name` from the site configuration.

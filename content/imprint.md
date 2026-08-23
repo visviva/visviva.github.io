@@ -39,17 +39,11 @@ processing, retention, and international data transfers are available in the
 and the
 [GitHub Pages documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages#data-collection).
 
-### External resources from jsDelivr
+### Locally hosted resources
 
-The website downloads MathJax from the jsDelivr content delivery network to display mathematical
-notation. Pages containing Mermaid diagrams also download Mermaid from jsDelivr. When these
-resources are requested, the visitor's browser connects to `cdn.jsdelivr.net`. According to
-jsDelivr, request data may include the IP address, browser type and version, referrer domain,
-requested CDN URL, request time, device identifiers, and diagnostic data.
-
-The processing serves the legitimate interest of presenting mathematical notation and diagrams
-correctly and is based on Article 6(1)(f) GDPR. Further information is available in the
-[jsDelivr Privacy Policy](https://www.jsdelivr.com/terms/privacy-policy).
+The fonts, MathJax mathematics renderer, and Mermaid diagram renderer used by this website are
+served together with the website from the same host. Displaying them does not cause the visitor's
+browser to connect to a separate font, script, analytics, or content delivery service.
 
 ### Theme preference and local storage
 
@@ -80,7 +74,9 @@ available from the
 
 Last updated: 23 August 2026.
 
-## Font licenses
+## Third-party licenses
+
+### Fonts
 
 This website uses the following self-hosted fonts:
 
@@ -96,3 +92,12 @@ This website uses the following self-hosted fonts:
 - **Fira Code** is used for source code and other monospaced text. Copyright 2014 The Fira Code
   Project Authors. It is licensed under the SIL Open Font License, Version 1.1. See the
   [full Fira Code license](/fonts/licenses/fira-code-LICENSE.txt).
+
+### Software
+
+- **MathJax 3.2.2** renders mathematical notation. It is licensed under the Apache License 2.0.
+  See the [full MathJax license](/vendor/mathjax-3.2.2/LICENSE).
+
+- **Mermaid 11.17.0** renders diagrams. It is licensed under the MIT License, and its distributed
+  browser bundle retains the notices for bundled third-party software. See the
+  [full Mermaid license](/vendor/mermaid-11.17.0/LICENSE).
