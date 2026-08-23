@@ -287,6 +287,10 @@ It shall provide appropriate styling for:
 
 The article text width shall be constrained to a comfortable reading measure.
 
+Paragraphs in the primary article content shall use justified text with automatic hyphenation.
+
+Headings shall use restrained letter spacing that keeps the type compact without appearing crowded.
+
 ### 9.2 Code
 
 Code shall be treated as a first-class content type.
