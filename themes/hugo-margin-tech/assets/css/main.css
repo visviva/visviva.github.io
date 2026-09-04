@@ -217,6 +217,19 @@ a:hover { color:var(--accent); }
 .chroma .ge { font-style:italic; }
 .chroma .gs { font-weight:700; }
 .chroma .err { color:var(--syntax-red); text-decoration:underline wavy; text-decoration-thickness:1px; }
+.prose .code-block { overflow:hidden; border:1px solid var(--line); border-radius:8px; background:var(--code-block); }
+.prose .code-block-caption { display:flex; align-items:center; gap:10px; margin:0; padding:9px 12px; border-bottom:1px solid var(--line); color:var(--muted); background:var(--paper); font:12px/1.4 var(--mono); text-align:left; }
+.code-block-title { overflow:hidden; color:var(--text); font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
+.code-block-language { padding-left:10px; border-left:1px solid var(--line); text-transform:lowercase; }
+.code-diff-legend { display:flex; gap:12px; margin-left:auto; }
+.code-diff-symbol { display:inline-grid; width:1.3em; height:1.3em; place-items:center; border-radius:3px; font-weight:700; line-height:1; }
+.code-diff-symbol-added { color:var(--syntax-inserted); background:var(--syntax-inserted-bg); }
+.code-diff-symbol-removed { color:var(--syntax-deleted); background:var(--syntax-deleted-bg); }
+.prose .code-block .highlight { overflow:hidden; }
+.prose .code-block pre { margin:0; border:0; border-radius:0; }
+.code-diff .line { width:max-content; min-width:100%; padding-inline:10px; border-left:3px solid transparent; }
+.code-diff .diff-line-added { border-left-color:var(--syntax-inserted); background:var(--syntax-inserted-bg); }
+.code-diff .diff-line-removed { border-left-color:var(--syntax-deleted); background:var(--syntax-deleted-bg); }
 .prose blockquote { margin-left:0; padding-left:20px; border-left:2px solid var(--accent); color:var(--muted); }
 .prose img { display:block; margin:0 auto; max-width:100%; height:auto; border-radius:6px; }
 .prose table { display:block; width:100%; max-width:100%; overflow-x:auto; border-collapse:collapse; font:15px/1.5 var(--sans); }
@@ -268,4 +281,8 @@ a:hover { color:var(--accent); }
   .post-row-meta time,.post-row-meta span { display:inline; }
   .post-row-meta span::before { content:" · "; }
   .site-footer { flex-direction:column; }
+  .prose .code-block-caption { flex-wrap:wrap; }
+  .code-block-title { flex:1 1 auto; }
+  .code-block-language { white-space:nowrap; }
+  .code-diff-legend { width:100%; margin-left:0; padding-top:8px; border-top:1px solid var(--line); }
 }

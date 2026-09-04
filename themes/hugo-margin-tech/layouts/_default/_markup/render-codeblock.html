@@ -1,0 +1,54 @@
+{{- $isDiff := false -}}
+{{- with .Attributes.diff -}}
+  {{- $isDiff = eq (lower (printf "%v" .)) "true" -}}
+{{- end -}}
+{{- $title := "" -}}
+{{- with .Attributes.title -}}
+  {{- $title = printf "%v" . -}}
+{{- end -}}
+{{- if $isDiff -}}
+  {{- $options := merge (dict "lineNos" false) .Options -}}
+  {{- if not (transform.CanHighlight .Type) -}}
+    {{- $options = merge (dict "type" "text") $options -}}
+  {{- end -}}
+  {{- $result := transform.HighlightCodeBlock . $options -}}
+  {{- $fragments := split (printf "%s" $result.Inner) `<span class="line">` -}}
+  {{- $sourceLines := split .Inner "\n" -}}
+  <figure class="code-block code-diff">
+    <figcaption class="code-block-caption">
+      <span class="code-block-title">{{ $title | default "Code changes" }}</span>
+      {{- with .Type }}<span class="code-block-language">{{ . }}</span>{{ end -}}
+      <span class="code-diff-legend">
+        <span><span class="code-diff-symbol code-diff-symbol-added" aria-hidden="true">+</span> Added</span>
+        <span><span class="code-diff-symbol code-diff-symbol-removed" aria-hidden="true">−</span> Removed</span>
+      </span>
+    </figcaption>
+    <div class="highlight">
+      <pre tabindex="0" class="chroma"><code class="language-{{ .Type }}" data-lang="{{ .Type }}">{{- range $index, $fragment := $fragments -}}
+        {{- if gt $index 0 -}}
+          {{- $lineIndex := sub $index 1 -}}
+          {{- $line := index $sourceLines $lineIndex -}}
+          {{- $class := "line" -}}
+          {{- if hasPrefix $line "+" -}}
+            {{- $class = "line diff-line diff-line-added" -}}
+          {{- else if hasPrefix $line "-" -}}
+            {{- $class = "line diff-line diff-line-removed" -}}
+          {{- end -}}
+          {{- $fragment = replaceRE `</span>$` "" $fragment -}}
+          <span class="{{ $class }}">{{ $fragment | safeHTML }}</span>
+        {{- end -}}
+      {{- end -}}</code></pre>
+    </div>
+  </figure>
+{{- else if $title -}}
+  {{- $result := transform.HighlightCodeBlock . -}}
+  <figure class="code-block">
+    <figcaption class="code-block-caption">
+      <span class="code-block-title">{{ $title }}</span>
+      {{- with .Type }}<span class="code-block-language">{{ . }}</span>{{ end -}}
+    </figcaption>
+    {{ $result.Wrapped }}
+  </figure>
+{{- else -}}
+  {{- (transform.HighlightCodeBlock .).Wrapped -}}
+{{- end -}}

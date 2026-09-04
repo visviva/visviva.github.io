@@ -332,11 +332,24 @@ The theme shall support:
 
 - fenced Markdown code blocks;
 - syntax highlighting through Hugo;
+- optional code-block titles authored with a `title` fenced block attribute;
+- language-aware code diff blocks authored with a fenced block attribute;
 - horizontal overflow for long lines;
 - inline code;
 - copy-friendly text selection.
 
 Code blocks shall not force the entire page to overflow horizontally.
+
+The `title` attribute shall work for normal and diff code blocks. A titled normal block shall use
+the same framed header as a diff block without gaining diff line treatment or a diff legend.
+
+Code diff blocks shall retain the source language so Hugo can apply the corresponding Chroma syntax
+highlighting. Authors shall enable the view with `diff=true`, prefix added and removed lines with
+`+` and `-`, and may provide a human-readable `title`. Added and removed lines shall have full-width
+visual treatment and text markers so that color is not the only indicator of their state.
+
+The diff view shall use Hugo's built-in highlighter and theme-owned templates and CSS. It shall not
+load a diff or syntax-highlighting library from a third-party content delivery network.
 
 ### 9.3 Headings
 
@@ -728,6 +741,7 @@ The example content shall include:
 - multiple tags;
 - an article with several headings;
 - an article with code blocks;
+- a language-aware code diff block;
 - an article containing several margin notes.
 - TeX mathematics;
 - a Mermaid diagram;
@@ -821,6 +835,9 @@ The initial version of the theme shall be considered complete when all of the fo
 - [ ] Margin notes scroll with their references and do not stick to the viewport.
 - [ ] Margin notes remain accessible on mobile.
 - [ ] Code blocks render without breaking the page layout.
+- [ ] Normal code blocks display an optional title without requiring `diff=true`.
+- [ ] Code diff blocks retain language syntax highlighting and distinguish added and removed lines.
+- [ ] Code diff rendering does not load a third-party diff or highlighting library.
 - [ ] Math renders when enabled globally or in page front matter.
 - [ ] Fenced Mermaid blocks render as diagrams.
 - [ ] MathJax and Mermaid load from self-hosted, versioned paths without third-party CDN requests.

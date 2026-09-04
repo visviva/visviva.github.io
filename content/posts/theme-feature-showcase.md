@@ -1,6 +1,6 @@
 +++
 title = "Theme feature showcase"
-description = "A reference post demonstrating the Markdown, navigation, annotation, math, and diagram features supported by the theme."
+description = "A reference post demonstrating the Markdown, code diff, navigation, annotation, math, and diagram features supported by the theme."
 date = 2026-08-18
 draft = true
 tags = ["hugo", "theme", "reference"]
@@ -34,16 +34,18 @@ Lists work as expected:
 
 Tables remain within the reading column:
 
-| Feature     | Authoring syntax  | Rendering            |
-| :---------- | :---------------- | :------------------- |
-| Margin note | `note` shortcode  | Right rail or inline |
-| Math        | TeX delimiters    | MathJax              |
-| Mermaid     | Fenced code block | Responsive SVG       |
-| draw.io     | Markdown image    | Exported SVG or PNG  |
+| Feature     | Authoring syntax        | Rendering            |
+| :---------- | :---------------------- | :------------------- |
+| Margin note | `note` shortcode        | Right rail or inline |
+| Math        | TeX delimiters          | MathJax              |
+| Mermaid     | Fenced code block       | Responsive SVG       |
+| draw.io     | Markdown image          | Exported SVG or PNG  |
+| Code diff   | Fenced block attributes | Language-aware diff  |
 
-Fenced code blocks support Hugo syntax highlighting and horizontal scrolling for long lines:
+Fenced code blocks support Hugo syntax highlighting, optional titles, and horizontal scrolling for
+long lines. A title does not enable diff styling:
 
-```go
+```go {title="Code"}
 package main
 
 import "fmt"
@@ -53,6 +55,25 @@ func main() {
     fmt.Printf("Theme features: %v\n", features)
 }
 ```
+
+### Syntax-highlighted code diffs
+
+A diff keeps the code language in the fence and adds `diff=true`. Lines beginning with `+` are
+additions, lines beginning with `-` are removals, and lines beginning with a space provide context.
+The optional `title` labels the example:
+
+```go {diff=true title="Extend the feature list"}
+ func main() {
+-    features := []string{"math", "mermaid", "margin notes"}
++    features := []string{"math", "mermaid", "margin notes", "code diffs"}
+     fmt.Printf("Theme features: %v\n", features)
+ }
+```
+
+Hugo still applies Go syntax highlighting because the fence remains a `go` block. The diff markers,
+full-line backgrounds, and text labels distinguish additions from removals without relying on color
+alone. The theme implements the view with Hugo's built-in Chroma highlighter and local CSS, so it
+does not load a highlighting or diff library from a content delivery network (CDN).
 
 ## Mathematics
 

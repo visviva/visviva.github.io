@@ -13,7 +13,7 @@ A restrained Hugo theme for technical writing.
 - Active TOC section highlighting
 - Article reading progress below the sticky header
 - Automatic Hugo reading-time estimates on articles and post listings
-- Syntax-highlight friendly code blocks
+- Syntax-highlighted code blocks and language-aware code diffs
 - Self-hosted MathJax equations and Mermaid fenced code blocks
 - Standard Markdown images for exported draw.io diagrams
 - Configurable social links in the site header
@@ -47,6 +47,33 @@ On narrower layouts, clicking the numbered marker reveals the note inline.
 Posts live under `content/posts/` and should have `date`, `description`, and optional `tags` front matter.
 Hugo calculates each post's reading time from its content, so authors do not need to maintain a
 reading-length value in front matter.
+
+## Code blocks and diffs
+
+Normal fenced code blocks can display an optional title without enabling the diff view:
+
+````md
+```go {title="Greeting example"}
+fmt.Println("Hello, world!")
+```
+````
+
+Add `diff=true` to a fenced code block while keeping its normal language identifier. Prefix added
+lines with `+`, removed lines with `-`, and unchanged lines with one space:
+
+````md
+```go {diff=true title="Greeting change"}
+ func greet() {
+-    fmt.Println("Hello")
++    fmt.Println("Hello, world!")
+ }
+```
+````
+
+Hugo highlights both blocks as Go. The theme marks the diff's added and removed lines across its
+full width. The `title` attribute works independently of `diff`; when omitted from a diff, the
+header uses “Code changes.” This feature uses Hugo's built-in Chroma highlighter and theme CSS; it
+does not download a diff or highlighting library from a CDN.
 
 ## Identity and social links
 
