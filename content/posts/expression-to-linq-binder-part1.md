@@ -1,31 +1,33 @@
 +++
 title = "From Filter Strings to LINQ (Part I)"
-description = "Build a lexer, parser, and binder that turns user-defined filter strings into LINQ expression trees for dynamic queries."
+description = "See why runtime filter strings need a small language, then define the syntax and compilation pipeline that turns them into LINQ predicates."
 date = "2026-09-05"
-draft = true
+draft = false
 tags = ["c#", "parser", "linq"]
 math = true
 +++
 
 ## Preface
 
-It actually goes back to a problem I had at my job. We use a system modeling software to define data
-types for typical middleware stuff like transporation of data between different applications. There
-we had the goal to have some kind of validation engine to assert policies on the sent/received data
-types.
+The idea for this project goes back to a problem I encountered at work. We use a system-modeling
+tool to define data types for middleware that transports data between applications. We wanted a
+validation engine that could enforce policies on the data types we sent and received.
 
-Actually this is not different at all to this LINQ expression parser/binder. In the end problems
-like these always feel like some kind of hidden
-[SAT solver](https://en.wikipedia.org/wiki/SAT_solver).
+Problems like this always felt a little like a
+[SAT solver](https://en.wikipedia.org/wiki/SAT_solver) hiding inside ordinary middleware. We are not
+actually solving satisfiability here, but both problems ask us to represent and evaluate logical
+rules.
 
-I never came to finish this project at my job and it also never left my brain. I hope this helps me
-to get rid of it at all. Therefore I changed to problem itself and tried to solve it in C#.
+I never had the chance to finish that project, and the idea refused to leave my brain. This series
+is my attempt to give it somewhere else to live. I reduced the original problem to a smaller example
+that I could explore outside work. In this first part, we will watch the problem grow and see what
+it eventually demands from us.
 
 ## The Problem
 
 Imagine we are building an application that exposes products:
 
-```csharp {title="Product Definition"}
+```csharp {title="Product definition"}
 record Product(
     string Name,
     string Category,
@@ -33,63 +35,60 @@ record Product(
     bool InStock);
 ```
 
-At some point, someone will filter for properties and this is pretty easy:
+At some point, we want to filter this collection by its properties. With a fixed condition, life is
+easy:
 
-```csharp {title="Typical Filtering"}
-var products = db.Products
+```csharp {title="Filtering with a fixed predicate"}
+var matchingProducts = products
     .Where(p => p.Price > 100 && p.InStock);
 ```
 
-But some product management guy definitly will come with such a requirement:
+Sooner or later, product management arrives with the perfectly reasonable requirement that ruins our
+quiet afternoon:
 
 > Users shall be able to define their own filters at runtime.
 
-Especiall when we're building an admin dashboard, reporting system, all kind of automation stuff or
-of course a search feature.
+Runtime filters are useful in admin dashboards, reporting systems, automation tools, and search
+features.
 
 We then want users to be able to express:
 
 {{< note >}}I use python for syntax highlighting of our small language. This is not python. Maybe it
 works by accident.{{< /note >}}
 
-```python {title="User Query"}
+```python {title="User query"}
 price > 100 and inStock == true
 ```
 
-The very important constraint is that we do not know this condition when we compile the application.
-So we somehow need to turn
+The key constraint is that we do not know this condition when we compile the application. We need to
+turn
 
-```python {title="User Query"}
+```python {title="Filter source"}
 price > 100 and inStock == true
 ```
 
 into something like:
 
-```csharp {title="Transformed User Query"}
+```csharp {title="Generated predicate"}
 p => p.Price > 100 && p.InStock == true
 ```
 
-And to make this work with LINQ, we want the result to be of type:
+We do not need to decide how the application creates this condition yet. From the caller's
+perspective, the result only needs to be usable with LINQ:
 
-```csharp {title="Filter Type"}
-Expression<Func<Product, bool>>
+```csharp {title="Applying a runtime filter"}
+var matchingProducts = products.Where(predicate);
 ```
 
-so that we can pass it into
-
-```csharp {title="LINQ Query"}
-db.Products.Where(predicate);
-```
-
-This is our problem!
+At this point, we do not know how to produce `predicate` from the user's text. Finding that bridge
+is our problem!
 
 ## The obvious solution
 
-This problem actually sounds very normal and I bet millions of developers already solved it. Maybe
-there are common patterns or each one solved it differently, I don't know. But the straightforward
-way to solve this, is to initially come up with something like:
+We are almost certainly not the first developers to meet this problem. A straightforward answer is a
+structured filter object:
 
-```csharp {title="Product Filter Type"}
+```csharp {title="Product filter type"}
 record ProductFilter(
     decimal? MinimumPrice,
     decimal? MaximumPrice,
@@ -99,9 +98,9 @@ record ProductFilter(
 
 Then we can construct a query:
 
-```csharp {title="Query Definition"}
-IQueryable<Product> ApplyFilter(
-    IQueryable<Product> query,
+```csharp {title="Applying a structured filter"}
+IEnumerable<Product> ApplyFilter(
+    IEnumerable<Product> query,
     ProductFilter filter)
 {
     if (filter.MinimumPrice is not null)
@@ -120,36 +119,37 @@ IQueryable<Product> ApplyFilter(
 }
 ```
 
-I guess for most applications this is exactly the correct solution. No need for a language when four
-optional properties can solve your problem.
+I think this is the right solution for many applications. We do not need a language when four
+optional properties solve the problem.
 
-But as always, requirements grew. At first users want:
+But requirements, as they tend to do when nobody is watching, grow. At first, users want one
+comparison:
 
-```python {title="Simple Query"}
+```python {title="Simple query"}
+price > 100
+```
+
+Then they combine multiple comparisons:
+
+```python {title="Combined query"}
 price > 100 and category == "Books"
 ```
 
-and then they want:
+Still fine. Then comes this:
 
-```python {title="More complex Query"}
-price > 100 and category == "Books"
-```
-
-and everything still fine but then:
-
-```python {title="Breaking Query"}
+```python {title="Grouped query"}
 (price < 20 or price > 100) and inStock == true
 ```
 
-The simple filter object are breaking apart. The users aren't just specifying values anymore, they
-are now specifying logic. This is a transition point.
+Our pleasant little filter object starts to come apart at the seams. Users no longer specify only
+values, they also define relationships and grouping. That is the transition point.
 
-## A possible solution: Build the Expression dynamically
+## A possible solution: Build the expression dynamically
 
 {{< note >}}Does this already qualify to be a
-[homoiconic](https://en.wikipedia.org/wiki/Homoiconicity) language?{{< /note >}}But still, not a
-problem, we are not the first having this problem. Now little bit more complicated but C# allows us
-to represent code as data through expression trees.
+[homoiconic](https://en.wikipedia.org/wiki/Homoiconicity) language?{{< /note >}} This is more
+complicated, yes, but not yet a reason to panic. C# allows us to represent code as data through
+expression trees.
 
 Instead of:
 
@@ -159,7 +159,7 @@ p => p.Price > 100
 
 we can also construct this:
 
-```csharp {title="Predicate Construction"}
+```csharp {title="Constructing an expression tree"}
 var parameter = Expression.Parameter(
     typeof(Product),
     "p");
@@ -168,11 +168,11 @@ var property = Expression.Property(
     parameter,
     nameof(Product.Price));
 
+var value = Expression.Constant(100m);
+
 var comparison = Expression.GreaterThan(
     property,
     value);
-
-var value = Expression.Constant(100m);
 
 var predicate =
     Expression.Lambda<Func<Product, bool>>(
@@ -180,49 +180,50 @@ var predicate =
         parameter);
 ```
 
-And we also get:
+Very nice. This produces an expression tree with the following type:
 
-```csharp {title="Result Type of Predicate Construction"}
+```csharp {title="Expression tree type"}
 Expression<Func<Product, bool>>
 ```
 
-Very nice, so what we do is split the query into three parts:
+For this small example, we can split the query into three parts:
 
-```text
+```text {title="Three query fragments"}
 price
 >
 100
 ```
 
-and create corresponding expression tree. For this example it works.
+We then create the corresponding expression-tree nodes.
 
 But now our user specifies the query from above:
 
-```python {title="User Query"}
+```python {title="User query"}
 price > 100 and inStock == true
 ```
 
 Okay, perhaps we split on `and`. But what do we do on:
 
-```python {title="Breaking Query"}
+```python {title="Grouped query"}
 (price < 20 or price > 100) and inStock == true
 ```
 
-Splitting string (suddenly) starts to look suspicious.
+At this point, splitting the string starts to look less like a solution and more like a future bug
+report.
 
-## Accidental Invention of a Language
+## Accidental invention of a language
 
 Our users are writing:
 
-```python
+```python {title="Expression with grouping"}
 price > 100 and (category == "Books" or category == "Games")
 ```
 
-That isn't merely a string. It has syntax.
+That is not merely a string. It has syntax.
 
 It has literals:
 
-```python
+```python {title="Literal examples"}
 100
 "Books"
 true
@@ -230,7 +231,7 @@ true
 
 Identifiers:
 
-```python
+```python {title="Identifier examples"}
 price
 category
 inStock
@@ -238,7 +239,7 @@ inStock
 
 Operators:
 
-```python
+```python {title="Operator examples"}
 >
 ==
 and
@@ -247,7 +248,7 @@ or
 
 And grouping:
 
-```python
+```python {title="Parenthesized grouping"}
 (...)
 ```
 
@@ -255,13 +256,13 @@ More importantly, it has rules.
 
 For example:
 
-```python
+```python {title="Expression without explicit grouping"}
 price > 100 and inStock == true
 ```
 
 means:
 
-```python
+```python {title="Equivalent explicit grouping"}
 (price > 100) and (inStock == true)
 ```
 
@@ -269,79 +270,81 @@ Our application needs to understand that structure before it can generate an exp
 
 **We don't have a string-processing problem. We have a parsing problem.**
 
-## The Actual Solution
+## The solution architecture
 
 {{< note >}}If you are interested in this topic, checkout
 [crafting interpreters](https://craftinginterpreters.com/) from Robert Nystrom. It is by far one of
-the best books about how to build lexers, parser and interpreters. {{< /note >}} The architecture
-now emerges naturally. We are going to build a tiny query language. To do this, we will implement
-the following pipeline.
+the best books about how to build lexers, parser and interpreters. {{< /note >}} Once we admit that
+we have a language, the architecture more or less invites itself in. We are going to build that tiny
+language with the following pipeline.
 
 <!-- prettier-ignore -->
-![Pipeline](/diagrams/expression-linq-binder/pipeline.drawio.svg)
+![Pipeline from query source through lexer, parser, and binder to a LINQ expression](/diagrams/expression-linq-binder/pipeline.drawio.svg)
 {.dark-invert}
 
-Lets assume, the user enters as query source:
+Let's assume the user enters this query:
 
-```python
+```python {title="Query source"}
 price > 100 and category == "Books"
 ```
 
-Then the lexer will produce these tokens:
+The lexer produces a token stream. Its diagnostic output also contains source positions, but we can
+use the following compact representation here:
 
-```text
-Identifier("price")
-GreaterThan
-Number("100")
-And
-Identifier("category")
-Equal
-String("Books")
+```text {title="Simplified token stream"}
+IdentifierToken("price")
+GreaterThanToken(">")
+NumberToken("100")
+AmpersandAmpersandToken("and")
+IdentifierToken("category")
+EqualEqualToken("==")
+StringToken("Books")
+EndOfInputToken
 ```
 
 The parser will then transform this stream of tokens into an abstract syntax tree (AST):
 
 <!-- prettier-ignore -->
-![Pipeline](/diagrams/expression-linq-binder/sample-ast.drawio.svg)
+![Abstract syntax tree for the product-filter query](/diagrams/expression-linq-binder/sample-ast.drawio.svg)
 {.dark-invert}
 
-And in the end the binder will convert this AST into a LINQ Expression
+The binder then converts the AST into a LINQ expression tree:
 
-```csharp
+```csharp {title="Expression tree type"}
 Expression<Func<Product, bool>>
 ```
 
-that can be displayed as
+We can display that tree as:
 
-```csharp
+```csharp {title="Generated expression"}
 p => p.Price > 100 && p.Category == "Books"
 ```
 
-and for example used like
+Finally, `PredicateCompiler<T>` compiles the tree into a `Func<Product, bool>`. We can pass this
+delegate to LINQ's `Where` method for our in-memory collection:
 
-```csharp
-var result = db.Products.Where(predicate);
+```csharp {title="Applying the compiled predicate"}
+var matchingProducts = products.Where(predicate);
 ```
 
-## How does the API look?
+## What does the API look like?
 
-At the end we want to have something like
+The complete API usage looks like this:
 
-```csharp
-var compiler = new Linde.PredicateCompiler<Product>();
+```csharp {title="Compiling and applying a query"}
+var customExpression = "(category is \"Books\" and price > 130) and instock";
 
-var predicate = expressionCompiler.CompileExpression("""
-        price > 100 && category == "Books"
-"""
-);
+var expressionCompiler = new Linde.PredicateCompiler<Product>();
+
+var predicate = expressionCompiler.CompileExpression(customExpression);
 
 var matchingProducts = products.Where(predicate);
 ```
 
 ## Description of the language
 
-I named the language Linde. It is a tree, quite common in Germany and I like how they look in
-spring.
+I named the language Linde, the German word for linden tree. They are common here, and I like how
+they look in spring.
 
 Linde is an expression-only language. A source string must describe a predicate, an expression that
 produces a Boolean value. It has no statements, variable declarations, assignments, or function
@@ -353,7 +356,7 @@ resolve to the `Price` property of `Product`.
 
 The language supports three kinds of literals:
 
-- whole numbers such as `100`, which Linde represents as `decimal` values
+- numbers such as `100` and `19.95`, which Linde represents as `decimal` values
 - strings in double quotes, such as `"Books"`
 - the Boolean values `true` and `false`
 
@@ -365,12 +368,13 @@ We can combine them with the following operators, listed from highest to lowest 
 | `*`, `/`              | Multiplication and division           |
 | `+`, `-`              | Addition and subtraction              |
 | `<`, `<=`, `>`, `>=`  | Relational comparison                 |
-| `==`, `!=`, `is`      | Equality and inequality               |
+| `==`, `is`            | Equality                              |
+| `!=`                  | Inequality                            |
 | `&&`, `and`           | Short-circuiting Boolean AND          |
 | `\|\|`, `or`          | Short-circuiting Boolean OR           |
 
-Parentheses override this precedence. The word forms are case-insensitive, which means `AND`,
-`True`, and `is` are valid too.
+Parentheses override this precedence. Keywords are case-insensitive, which means `AND`, `True`, and
+`is` are valid too.
 
 The smallest useful query compares one property with a literal:
 
@@ -403,12 +407,21 @@ Arithmetic expressions can appear on either side of a comparison:
 (price + 10) * 2 >= 300
 ```
 
-Linde will not perform implicit type conversion. Both operands of an operator must already have
-compatible .NET types. This is why the numeric examples work with `decimal`.
+Linde does not perform implicit type conversion. Both operands of an operator must already have
+compatible .NET types. The numeric examples work because Linde represents numeric literals as
+`decimal` values and `Product.Price` is also a `decimal`.
 
 {{< note >}}Again, take a look at [crafting interpreters](https://craftinginterpreters.com/) from
 Robert Nystrom. All of these important language design topics is taken care of in the
-book.{{< /note >}} To make it easy for this post, string literals do not support escape sequences. A
-query must also end in a Boolean value; `price + 10` is a valid arithmetic expression, but it cannot
-serve as a predicate by itself. Of course this can all be implemented pretty easy, but the code
-examples then tend to get bigger and bigger and this is not a post about language design.
+book.{{< /note >}} For this post, string literals do not support escape sequences. A query must also
+end in a Boolean value. For example, `price + 10` is a syntactically valid arithmetic expression,
+but the binder rejects it as a predicate because its result is not Boolean. None of these
+limitations is sacred. Removing them would mostly make the examples grow until this quietly turned
+into a post about language design—which it is not.
+
+## What comes next
+
+That is enough accidental language design for one post. We now know what Linde accepts and what it
+produces. We also have a pipeline that separates recognizing tokens, understanding their structure,
+and binding that structure to .NET properties. In the next part, we can start turning the query
+source into tokens.

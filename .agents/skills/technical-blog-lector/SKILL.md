@@ -22,6 +22,17 @@ preserving the author's personality, intent, and level of technical depth.
 - Address the reader as **you** when giving a direct instruction or describing a choice that belongs
   to the reader.
 
+## Personality and humor
+
+- Treat dry humor, playful exaggeration, self-deprecation, unusual metaphors, and informal asides as
+  part of the author's voice. Do not replace them with generic professional prose merely because it
+  sounds smoother.
+- When a humorous passage is unclear, inaccurate, or dismissive, preserve the joke's intent and
+  rhythm while fixing the problem. Edit around a good punchline when possible instead of removing
+  it.
+- Do not invent jokes when the source is neutral, and do not make every paragraph compete for a
+  punchline. Humor should remain an undertone unless the author asks for more.
+
 ## Clear language
 
 - Prefer familiar, concrete words over jargon or inflated wording.
