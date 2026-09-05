@@ -618,6 +618,7 @@ The theme shall support light and dark color modes. It shall:
 - respect `prefers-color-scheme`;
 - preserve sufficient contrast;
 - apply consistently to prose, navigation, code, tables, diagrams, notes, and TOC elements;
+- allow individual prose images to opt into color inversion in dark mode;
 - provide a keyboard-accessible manual switch in the header;
 - persist the visitor's explicit choice between page loads.
 
