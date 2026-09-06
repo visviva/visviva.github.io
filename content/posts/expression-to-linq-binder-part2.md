@@ -1,7 +1,7 @@
 +++
 title = "From Filter Strings to LINQ (Part II)"
 description = "Build the lexer for a small filter language and turn source text into tokens for the parser."
-date = "2026-09-04"
+date = "2026-09-06"
 draft = false
 tags = ["c#", "parser", "linq"]
 math = true
