@@ -56,6 +56,9 @@ preserving the author's personality, intent, and level of technical depth.
   verifiable claims instead of inventing a correction.
 - Ensure code, commands, diagrams, and prose tell the same story. Prefer small, focused examples and
   explain the important part after showing it.
+- Give every fenced code block a concise, descriptive `title` attribute in its opening fence. Place
+  it after the language, as in `csharp {title="Token Reader"}`. Preserve other fence attributes and
+  combine them in the same attribute list, as in `csharp {title="Logical Operators" diff=true}`.
 - Flag commands that are destructive, expose secrets, weaken security, or depend on a particular
   environment. Recommend a warning or safer framing when appropriate.
 - End with a useful conclusion: what we learned, the limits of the approach, and a practical next

@@ -1,26 +1,28 @@
 +++
 title = "From Filter Strings to LINQ (Part II)"
-description = "Build a lexer, parser, and binder that turns user-defined filter strings into LINQ expression trees for dynamic queries."
+description = "Build the lexer for a small filter language and turn source text into tokens for the parser."
 date = "2026-09-04"
-draft = true
+draft = false
 tags = ["c#", "parser", "linq"]
 math = true
 +++
 
-This post continues from part 1.
+This post continues from [Part I]({{< ref "expression-to-linq-binder-part1.md" >}}), where we
+defined Linde's small query language and the pipeline that turns a filter string into a LINQ
+predicate. In this part, we build the first stage of that pipeline: the lexer.
 
 ## Building the Lexer
 
-The first step is to transform our source from a stream of characters into a stream of tokens. There
-are something we need to take care of here:
+The first step transforms the source text from a sequence of characters into a sequence of tokens.
+There are three details we need to handle:
 
-1. Whitespace is not important and can be skipped
-2. Reserved keywords are their own token
-3. Strings start and end with quotes, identifiers don't
+1. Whitespace between tokens is not significant and can be skipped.
+2. Reserved words map to keyword or operator tokens.
+3. Strings start and end with quotes; identifiers do not.
 
-So let's start:
+We start with the source text and a position:
 
-```csharp
+```csharp {title="Lexer State"}
 internal sealed class Lexer(string Text)
 {
     private int position = 0;
@@ -28,23 +30,24 @@ internal sealed class Lexer(string Text)
 }
 ```
 
-The position acts like a pointer to track the current position within the stream, where we start
-evaluating if a new token is recognized. And `IsAtEnd` is kind of self explaining. We also need to
-move further in the token stream:
+The `position` field is the offset of the next character we want to inspect. `IsAtEnd` tells us when
+that offset has reached or moved beyond the end of the source text. We also need a way to advance
+through the text:
 
-```csharp
+```csharp {title="Advance Through the Source"}
 private void Advance() => position++;
 ```
 
-And when we need to access the current character, we use:
+To access the character at the current position, we add:
 
-```csharp
+```csharp {title="Current Character"}
 private char Current => Text[position];
 ```
 
-These help us to get started to scan tokens. First we skip all whitespace:
+This first version assumes that `position` is within the bounds of `Text`. We will make that access
+safe shortly. With these helpers in place, we can skip whitespace:
 
-```csharp
+```csharp {title="Skip Whitespace"}
 private void SkipWhitespace()
 {
     while (char.IsWhiteSpace(Current))
@@ -54,9 +57,9 @@ private void SkipWhitespace()
 }
 ```
 
-And then retrieve the next token until we are at the end:
+We then retrieve one token at a time until the lexer emits an end-of-input token:
 
-```csharp
+```csharp {title="Scan the Token Sequence"}
 public IEnumerable<SyntaxToken> Scan()
 {
     SyntaxToken token;
@@ -68,18 +71,18 @@ public IEnumerable<SyntaxToken> Scan()
 }
 ```
 
-The important method is now `NextToken()`. There is all the important logic of the lexer as it
-creates the `SyntaxToken`. This is just a simple record:
+`NextToken()` contains the dispatch logic and creates a `SyntaxToken`. For now, the token is a small
+record:
 
-```csharp
+```csharp {title="Token Definition"}
 internal sealed record class SyntaxToken(
     SyntaxKind Kind, string Text, int Position
 ) {}
 ```
 
-where `SyntaxKind` is an enum of all the possible kinds of tokens we can have:
+`SyntaxKind` lists every kind of token the language recognizes:
 
-```csharp
+```csharp {title="Token Kinds"}
 internal enum SyntaxKind
 {
     BadToken,
@@ -107,9 +110,9 @@ internal enum SyntaxKind
 }
 ```
 
-So let's write `NextToken`:
+Now we can write the first version of `NextToken`:
 
-```csharp
+```csharp {title="Single-Character Token Dispatch"}
 private SyntaxToken NextToken()
 {
     SkipWhitespace();
@@ -134,11 +137,12 @@ private SyntaxToken NextToken()
 }
 ```
 
-Nice, but scanning for just simple one character tokens is not worth describing at all. But first
-for completeness `ReadToken`. It already gives a hint of multiple charater token with its `length`
-parameter.
+Single-character tokens are mechanical, but they establish the pattern we use for the rest of the
+lexer. `ReadToken` records the starting position, advances by the requested length, and returns the
+corresponding slice of source text. Its `length` parameter also prepares us for multi-character
+tokens.
 
-```csharp
+```csharp {title="Read a Token"}
 private SyntaxToken ReadToken(SyntaxKind tokenType, int length = 1)
 {
     var start = position;
@@ -150,9 +154,9 @@ private SyntaxToken ReadToken(SyntaxKind tokenType, int length = 1)
 }
 ```
 
-Now lets add the easier tokens like `&&` and `||` first:
+Let's add `&&` and `||` first:
 
-```csharp {diff=true}
+```csharp {title="Add Logical Operators" diff=true}
 private SyntaxToken NextToken()
 {
     SkipWhitespace();
@@ -180,10 +184,11 @@ private SyntaxToken NextToken()
 }
 ```
 
-Looks like we also need to peek the `Next` character in the source stream. To also make this more
-bound safe we replace and add:
+These tokens require us to inspect the next character without consuming it. `Peek` also makes access
+to `Current` bounds-safe by returning the null character when the requested position lies beyond the
+source text:
 
-```csharp {diff=true}
+```csharp {title="Add Bounds-Safe Lookahead" diff=true}
 -private char Current => Text[position];
 
 +private char Peek(int lookAhead) =>
@@ -193,10 +198,10 @@ bound safe we replace and add:
 +private char Next => Peek(1);
 ```
 
-To scan for tokens that offer multiple choices like `!=` vs. `==` or all the comparisons like `<`
-vs. `<=`. We need a way to scan either a one character token or a two character token:
+Some operators share their first character, such as `!` and `!=`, or `<` and `<=`. We need a helper
+that chooses between a one-character token and a two-character token:
 
-```csharp {diff=true}
+```csharp {title="Add Compound Operators" diff=true}
 private SyntaxToken NextToken()
 {
     SkipWhitespace();
@@ -229,9 +234,9 @@ private SyntaxToken NextToken()
 }
 ```
 
-Where `ReadCompoundToken` is a very obvious solution:
+`ReadCompoundToken` checks the lookahead character and selects the appropriate token kind:
 
-```csharp
+```csharp {title="Read a Compound Token"}
 private SyntaxToken ReadCompoundToken(
     char secondCharacter,
     SyntaxKind singleType,
@@ -246,10 +251,10 @@ private SyntaxToken ReadCompoundToken(
 }
 ```
 
-Now only strings, numbers and identifiers are missing. Scanning for string as straightforward, we
-see `"` then `Advance` until we see the next `"`:
+Only strings, numbers, and identifiers remain. A string starts with `"`. We skip that opening quote,
+advance until we find the closing quote, and store only the text between them:
 
-```csharp
+```csharp {title="Read a String Literal"}
 private SyntaxToken ReadString()
 {
     var start = position;
@@ -262,7 +267,7 @@ private SyntaxToken ReadString()
     {
         if (IsAtEnd)
         {
-            throw new LexerException($"Unterminated string literal at position {IsAtEnd}");
+            throw new LexerException($"Unterminated string literal at position {position}");
         }
         Advance();
     }
@@ -275,9 +280,9 @@ private SyntaxToken ReadString()
 }
 ```
 
-And we add it to the `NextToken` method and also for numbers and identifiers:
+We add strings to `NextToken`, together with the dispatch rules for numbers and identifiers:
 
-```csharp {diff=true}
+```csharp {title="Add Strings, Numbers, and Identifiers" diff=true}
 private SyntaxToken NextToken()
 {
     SkipWhitespace();
@@ -315,9 +320,9 @@ private SyntaxToken NextToken()
 }
 ```
 
-Next is numbers, whenever we come across a number character, we start scanning for a number:
+When we encounter a digit, `ReadNumber` consumes digits as well as `.` and `,` separators:
 
-```csharp
+```csharp {title="Read a Number Literal"}
 private SyntaxToken ReadNumber()
 {
     var start = position;
@@ -332,21 +337,21 @@ private SyntaxToken ReadNumber()
 ```
 
 {{< note >}}Error handling in lexer and parser is its own topic. I bet there could be whole books
-written around how to do this right so that a user can understand the error message.{{< /note >}}We
-`Advance` as long as we see a number, a dot, or a comma. This is of course not foolproof, as there
-are no multiple dots in a number. But with `.` and `,` we can write nice things like `1,000,000.50`.
-I really like the thousand separator, makes reading so much easier.
+written around how to do this right so that a user can understand the error message.{{< /note >}}The
+lexer only groups these characters into a token; it does not validate their arrangement. For
+example, it accepts `1.2.3` as one number token. The parser later rejects that text when it cannot
+convert it to a `decimal`. The same approach also lets us write `1,000,000.50`. I like the thousands
+separator because it makes large values easier to read.
 
-Last token kind is the identifier. I did a little hack here to make the lexer smaller as I did not
-create token kinds for the reserved keywords. They are transformed into its corresponding operation.
-But first, we scan for the identifier:
+The last kind of text we need to scan is an identifier. I keep the lexer small by mapping most
+reserved words to the token kind of their corresponding operator. First, we read the identifier:
 
-```csharp
+```csharp {title="Read an Identifier"}
 private SyntaxToken ReadIdentifier()
 {
     var start = position;
 
-    while ((char.IsLetter(Current) || char.IsDigit(Current)))
+    while (char.IsLetter(Current) || char.IsDigit(Current) || Current == '_')
     {
         Advance();
     }
@@ -357,14 +362,14 @@ private SyntaxToken ReadIdentifier()
 }
 ```
 
-Nothing special here, looks totally like all the other scan methods. We allow the identifiers to
-have numbers within their scope but not their beginning. Afterwards we check if the scanned
-identifier is a keyword of the language:
+The dispatch rule in `NextToken` requires the first character to be a letter or underscore. Once
+scanning has started, `ReadIdentifier` also accepts digits. Afterwards, we check whether the scanned
+identifier is a reserved word:
 
 {{< note >}}I love C# switch expressions. IMHO they are one of the best features added to the
 language.{{< /note >}}
 
-```csharp
+```csharp {title="Map Reserved Words"}
 private static SyntaxToken TransformToReservedKeywordOrKeep(SyntaxToken token) =>
     token.Text.ToUpperInvariant() switch
     {
@@ -378,12 +383,17 @@ private static SyntaxToken TransformToReservedKeywordOrKeep(SyntaxToken token) =
     };
 ```
 
-Of course, when we have keywords and members of the related query class having the same text, this
-will not work and proper error handling shoud be done. For the scope of this block, it will then
-just not work.
+This keyword transformation has a tradeoff: we cannot refer to properties named `And`, `Or`, `Not`,
+`True`, `False`, or `Is`. Supporting those names would require escaped identifiers or different
+keyword rules. For the scope of this post, we accept that limitation.
 
-This was all code for the lexer. Actually it looks all the same and feels completely mechanical as
-if this is could become part of something bigger or even be completely generated based on some
-generic notation. But be warned, digging into this topic will lead into a lot of time spent reading
-about NFA and DFA and that regex is just crazy. Checkout this awesome tutorial about
-[Building a Regex engine](https://www.abstractsyntaxseed.com/blog/regex-engine/introduction).
+That completes the lexer. Much of the code follows the same mechanical pattern, which hints that it
+could be generated from a more general notation. But be warned: digging into that topic can lead to
+many hours spent reading about nondeterministic finite automata (NFAs), deterministic finite
+automata (DFAs), and how deep regular expressions go. The tutorial
+[Building a Regex Engine](https://www.abstractsyntaxseed.com/blog/regex-engine/introduction) is an
+excellent place to continue down that rabbit hole.
+
+For now, `Scan` gives us a sequence of tokens and their source positions. The lexer does not decide
+operator precedence or whether an expression is meaningful. That work belongs to the parser, which
+is the next stage of the pipeline.
