@@ -3,7 +3,7 @@ title = "From Filter Strings to LINQ (Part I)"
 description = "See why runtime filter strings need a small language, then define the syntax and compilation pipeline that turns them into LINQ predicates."
 date = "2026-09-05"
 draft = false
-tags = ["c#", "parser", "linq"]
+tags = ["c#", "parser", "linq", "dotnet"]
 math = true
 +++
 

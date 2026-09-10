@@ -2,7 +2,7 @@
 title = "From Filter Strings to LINQ (Part III)"
 description = "Build the parser for a small filter language and turn tokens into an AST."
 date = "2026-09-10"
-draft = true
+draft = false
 tags = ["c#", "parser", "linq", "dotnet"]
 math = true
 +++
