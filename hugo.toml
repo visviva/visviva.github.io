@@ -13,6 +13,7 @@ noClasses = false
 lineNos = false
 
 [params]
+articleWidth = 100
 github = 'visviva'
 name = 'Simon Lauser'
 bio = 'I am a software engineer. I like to write about stuff that I do and find interesting.'

@@ -18,6 +18,8 @@
   <link rel="preload" href="{{ "fonts/source-serif-4-variable.woff2" | relURL }}" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{{ "fonts/fira-code-variable.woff2" | relURL }}" as="font" type="font/woff2" crossorigin>
   {{ with resources.Get "css/main.css" | minify | fingerprint }}<link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}">{{ end }}
+  {{ $articleWidth := int (site.Params.articleWidth | default 90) }}
+  <style>:root { --article-measure: {{ printf "%dch" $articleWidth | safeCSS }}; }</style>
 </head>
 <body>
   {{ $hasReadingProgress := and .IsPage (eq .Section "posts") }}

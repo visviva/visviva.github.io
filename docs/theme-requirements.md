@@ -245,7 +245,11 @@ The columns shall have distinct purposes:
 - **center:** primary article content;
 - **right:** contextual notes and remarks.
 
-The center column shall remain the visual focus of the page.
+The center column shall remain the visual focus of the page. Its maximum desktop reading measure
+shall be configurable through the numeric `params.articleWidth` value in the site configuration,
+expressed in character-width (`ch`) units. The theme shall use approximately 90 characters when the
+parameter is absent. The column may shrink below the configured measure when the viewport cannot
+accommodate the article and both rails.
 
 ### 7.2 Reading Progress
 
@@ -318,7 +322,9 @@ It shall provide appropriate styling for:
 - horizontal rules;
 - footnotes.
 
-The article text width shall be constrained to a comfortable reading measure.
+The article text width shall be constrained responsively. On sufficiently wide desktop viewports,
+the center column shall use the configured `params.articleWidth` measure so the site owner can
+balance prose readability with the horizontal space needed by code and diagrams.
 
 Paragraphs in the primary article content shall use justified text with automatic hyphenation.
 
@@ -495,7 +501,9 @@ Article
 
 The page shall not depend on horizontal scrolling for navigation.
 
-The main site header and navigation shall remain usable on mobile devices.
+The main site header and navigation shall remain usable on mobile devices. The site name, primary
+navigation, configured social links, and color-mode control shall remain on one horizontal row and
+shall not wrap into a second header line.
 
 ---
 
