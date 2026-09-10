@@ -326,7 +326,10 @@ The article text width shall be constrained responsively. On sufficiently wide d
 the center column shall use the configured `params.articleWidth` measure so the site owner can
 balance prose readability with the horizontal space needed by code and diagrams.
 
-Paragraphs in the primary article content shall use justified text with automatic hyphenation.
+Paragraphs in the primary article content shall use language-aware automatic hyphenation and the
+browser's higher-quality paragraph wrapping where supported. They shall use justified text when the
+article layout has enough horizontal space and start-aligned text on narrow viewports to avoid
+excessive gaps between words.
 
 Headings shall use restrained letter spacing that keeps the type compact without appearing crowded.
 

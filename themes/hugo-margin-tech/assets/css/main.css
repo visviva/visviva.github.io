@@ -145,7 +145,7 @@ a:hover { color:var(--accent); }
 .bio-card { width:100%; align-self:start; text-align:left; }
 .bio-card h1,.section-head h2 { margin:0; font-size:clamp(32px,4vw,44px); line-height:1; }
 .bio-head { padding-bottom:28px; border-bottom:1px solid var(--line); }
-.bio-body { width:min(100%,550px); margin:0 auto; text-align:justify; hyphens:auto; }
+.bio-body { width:min(100%,550px); margin:0 auto; text-align:justify; text-justify:auto; text-wrap:pretty; hyphens:auto; }
 .bio-card p:not(.eyebrow) { color:var(--text); max-width:none; margin-inline:0; font-size:18px; line-height:1.7; }
 .bio-content { margin-top:0; }
 .bio-content > :first-child { margin-top:0; }
@@ -188,7 +188,7 @@ a:hover { color:var(--accent); }
 .prose h2 { margin:2.2em 0 .7em; font-size:30px; line-height:1.2; }
 .prose h3 { margin:1.9em 0 .6em; font-size:22px; }
 .prose p,.prose ul,.prose ol,.prose blockquote { margin:1.15em 0; }
-.article-shell .prose p { text-align:justify; hyphens:auto; }
+.article-shell .prose p { text-align:justify; text-justify:auto; text-wrap:pretty; hyphens:auto; }
 .prose a { color:var(--link); }
 .prose code { color:var(--syntax-text); font: .86em/1.4 var(--mono); background:var(--code); padding:.14em .35em; border-radius:4px; }
 .prose pre { max-width:100%; overflow:auto; background:var(--code-block); border:1px solid var(--line); border-radius:8px; padding:18px 20px; font:14px/1.6 var(--mono); }
@@ -277,6 +277,7 @@ a:hover { color:var(--accent); }
   .article-header { margin-bottom:38px; }
   .article-header h1 { font-size:clamp(38px,12vw,58px); }
   .prose { font-size:17px; }
+  .bio-body,.article-shell .prose p { text-align:start; }
 }
 @media (max-width:520px) {
   .site-nav { gap:12px; }
