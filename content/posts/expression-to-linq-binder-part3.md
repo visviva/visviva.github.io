@@ -359,6 +359,18 @@ private SyntaxToken Expect(SyntaxKind tokenType)
 }
 ```
 
+The important detail is that the parser has one shared cursor: `position`. The `Current` and
+`Previous` properties only read tokens relative to that cursor. They never move it. `Consume` is the
+only method that changes `position`, and it always advances by one token.
+
+`Match` and `Expect` build different decisions on top of that single operation. A successful `Match`
+calls `Consume` and returns `true`; a failed `Match` returns `false` without moving. A successful
+`Expect` also calls `Consume`, but a failed `Expect` throws before the cursor can move. The same
+token therefore remains current when either check fails.
+
+<!-- prettier-ignore -->
+![Four token-list snapshots showing how successful calls to Expect and Match delegate to Consume, while a failed Match leaves the parser position unchanged](/diagrams/expression-linq-binder/parser-cursor-helpers.svg)
+
 The parser reports these errors through a dedicated exception:
 
 ```csharp {title="Parser Exception"}
@@ -525,6 +537,20 @@ private ExpressionSyntax ParseRuleExpression()
     return left;
 }
 ```
+
+This is where the shared cursor becomes less obvious. A parsing method does not receive its own
+slice of tokens. It receives no token argument at all. Instead, every method reads and updates the
+same `position` field. A caller records neither how far a nested method will move nor how many calls
+to `Consume` it will make. It asks the nested method to parse one complete subexpression and resumes
+at whatever token is current when that method returns.
+
+For example, consider `1 + 2 * price`. From inside `ParseAdditiveExpression`, parsing the right
+operand looks like one call to `ParseMultiplicativeExpression`. That call moves `position` from 2 to
+5 because it recursively parses `2`, matches `*`, and parses `price`. Deeper in the call chain,
+however, the cursor still moves one token at a time:
+
+<!-- prettier-ignore -->
+![Nested parser calls for 1 plus 2 times price, showing ParseMultiplicativeExpression moving the shared position across the complete right-hand subexpression through three one-token Consume calls](/diagrams/expression-linq-binder/parser-recursive-cursor.svg)
 
 We first parse the left side, which advances the position through its tokens. The current token may
 then be an operator. If `Match` finds one, we save it and parse the right operand. If our rule ended

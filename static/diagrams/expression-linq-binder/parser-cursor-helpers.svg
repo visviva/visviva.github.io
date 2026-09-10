@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="590" viewBox="0 0 1000 590" role="img" aria-labelledby="title desc">
+  <title id="title">How Consume, Match, and Expect move the parser cursor</title>
+  <desc id="desc">Four snapshots of the token list show that Consume advances the position by one. Expect and a successful Match call Consume, while a failed Match leaves the position unchanged.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 Z" class="arrow-fill"/>
+    </marker>
+    <style>
+      @font-face {
+        font-family: "Source Sans 3";
+        src: url("../../fonts/source-sans-3-variable.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 200 900;
+      }
+      @font-face {
+        font-family: "Source Serif 4";
+        src: url("../../fonts/source-serif-4-variable.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 200 900;
+      }
+      @font-face {
+        font-family: "Fira Code";
+        src: url("../../fonts/fira-code-variable.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 300 700;
+      }
+      :root { color-scheme: light dark; }
+      text { fill: light-dark(#172033, #f1f5f9); font-family: "Source Sans 3", ui-sans-serif, system-ui, sans-serif; }
+      .title { font-family: "Source Serif 4", ui-serif, Georgia, serif; font-size: 24px; font-weight: 600; }
+      .subtitle, .detail, .index { fill: light-dark(#526077, #a9b6c8); }
+      .subtitle { font-size: 16px; }
+      .method { font-family: "Fira Code", "SFMono-Regular", Consolas, monospace; font-size: 16px; font-weight: 600; }
+      .detail { font-size: 15px; }
+      .token { font-family: "Fira Code", "SFMono-Regular", Consolas, monospace; font-size: 16px; }
+      .index { font-family: "Fira Code", "SFMono-Regular", Consolas, monospace; font-size: 14px; }
+      .cell { fill: light-dark(#ffffff, #111827); stroke: light-dark(#98a4b7, #64748b); stroke-width: 1.5; }
+      .consumed { fill: light-dark(#eef1f5, #273244); stroke: light-dark(#c1c8d3, #536174); }
+      .current { fill: light-dark(#dff3ff, #123d58); stroke: light-dark(#087fb8, #58c8ff); stroke-width: 2.5; }
+      .cursor { fill: light-dark(#087fb8, #58c8ff); }
+      .movement { fill: none; stroke: light-dark(#087fb8, #58c8ff); stroke-width: 2.5; marker-end: url(#arrow); }
+      .unchanged { fill: none; stroke: light-dark(#8b5b00, #f5c451); stroke-width: 2.5; }
+      .arrow-fill { fill: light-dark(#087fb8, #58c8ff); }
+      .divider { stroke: light-dark(#d7dce4, #344155); stroke-width: 1; }
+    </style>
+  </defs>
+
+  <text x="28" y="34" class="title">Only Consume changes position</text>
+  <text x="28" y="58" class="subtitle">Match and Expect move the cursor only when they delegate to Consume.</text>
+
+  <g transform="translate(0 82)">
+    <text x="28" y="28" class="method">Start</text>
+    <text x="28" y="50" class="detail">position = 0, Current = price</text>
+    <text x="414" y="10" class="index" text-anchor="middle">0</text>
+    <text x="554" y="10" class="index" text-anchor="middle">1</text>
+    <text x="694" y="10" class="index" text-anchor="middle">2</text>
+    <text x="834" y="10" class="index" text-anchor="middle">3</text>
+    <rect x="344" y="20" width="140" height="48" rx="4" class="cell current"/>
+    <rect x="484" y="20" width="140" height="48" rx="4" class="cell"/>
+    <rect x="624" y="20" width="140" height="48" rx="4" class="cell"/>
+    <rect x="764" y="20" width="140" height="48" rx="4" class="cell"/>
+    <text x="414" y="50" class="token" text-anchor="middle">price</text>
+    <text x="554" y="50" class="token" text-anchor="middle">+</text>
+    <text x="694" y="50" class="token" text-anchor="middle">10</text>
+    <text x="834" y="50" class="token" text-anchor="middle">&lt;EOF&gt;</text>
+    <path d="M 406 76 L 422 76 L 414 68 Z" class="cursor"/>
+  </g>
+
+  <line x1="28" y1="176" x2="972" y2="176" class="divider"/>
+
+  <g transform="translate(0 190)">
+    <text x="28" y="28" class="method">Expect(IdentifierToken)</text>
+    <text x="28" y="50" class="detail">matches → Consume() → position 0 → 1</text>
+    <rect x="344" y="20" width="140" height="48" rx="4" class="cell consumed"/>
+    <rect x="484" y="20" width="140" height="48" rx="4" class="cell current"/>
+    <rect x="624" y="20" width="140" height="48" rx="4" class="cell"/>
+    <rect x="764" y="20" width="140" height="48" rx="4" class="cell"/>
+    <text x="414" y="50" class="token" text-anchor="middle">price</text>
+    <text x="554" y="50" class="token" text-anchor="middle">+</text>
+    <text x="694" y="50" class="token" text-anchor="middle">10</text>
+    <text x="834" y="50" class="token" text-anchor="middle">&lt;EOF&gt;</text>
+    <path d="M 414 10 C 448 -8, 520 -8, 554 10" class="movement"/>
+    <path d="M 546 76 L 562 76 L 554 68 Z" class="cursor"/>
+  </g>
+
+  <line x1="28" y1="284" x2="972" y2="284" class="divider"/>
+
+  <g transform="translate(0 298)">
+    <text x="28" y="28" class="method">Match(MinusToken)</text>
+    <text x="28" y="50" class="detail">no match → false; position stays 1</text>
+    <rect x="344" y="20" width="140" height="48" rx="4" class="cell consumed"/>
+    <rect x="484" y="20" width="140" height="48" rx="4" class="cell current"/>
+    <rect x="624" y="20" width="140" height="48" rx="4" class="cell"/>
+    <rect x="764" y="20" width="140" height="48" rx="4" class="cell"/>
+    <text x="414" y="50" class="token" text-anchor="middle">price</text>
+    <text x="554" y="50" class="token" text-anchor="middle">+</text>
+    <text x="694" y="50" class="token" text-anchor="middle">10</text>
+    <text x="834" y="50" class="token" text-anchor="middle">&lt;EOF&gt;</text>
+    <path d="M 534 7 C 542 -3, 566 -3, 574 7" class="unchanged"/>
+    <path d="M 546 76 L 562 76 L 554 68 Z" class="cursor"/>
+  </g>
+
+  <line x1="28" y1="392" x2="972" y2="392" class="divider"/>
+
+  <g transform="translate(0 406)">
+    <text x="28" y="28" class="method">Match(PlusToken)</text>
+    <text x="28" y="50" class="detail">matches → Consume() → position 1 → 2</text>
+    <rect x="344" y="20" width="140" height="48" rx="4" class="cell consumed"/>
+    <rect x="484" y="20" width="140" height="48" rx="4" class="cell consumed"/>
+    <rect x="624" y="20" width="140" height="48" rx="4" class="cell current"/>
+    <rect x="764" y="20" width="140" height="48" rx="4" class="cell"/>
+    <text x="414" y="50" class="token" text-anchor="middle">price</text>
+    <text x="554" y="50" class="token" text-anchor="middle">+</text>
+    <text x="694" y="50" class="token" text-anchor="middle">10</text>
+    <text x="834" y="50" class="token" text-anchor="middle">&lt;EOF&gt;</text>
+    <path d="M 554 10 C 588 -8, 660 -8, 694 10" class="movement"/>
+    <path d="M 686 76 L 702 76 L 694 68 Z" class="cursor"/>
+  </g>
+
+  <rect x="340" y="541" width="24" height="20" rx="3" class="cell consumed"/>
+  <text x="376" y="558" class="detail">consumed token</text>
+  <rect x="530" y="541" width="24" height="20" rx="3" class="cell current"/>
+  <text x="566" y="558" class="detail">Current token</text>
+</svg>

@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="710" viewBox="0 0 1200 710" role="img" aria-labelledby="title desc">
+  <title id="title">How recursive descent advances through a binary expression</title>
+  <desc id="desc">For the expression 1 plus 2 times price, ParseAdditiveExpression delegates to nested methods. The right ParseMultiplicativeExpression moves the shared position from 2 to 5 because deeper Expect and Match calls consume three tokens one at a time.</desc>
+  <defs>
+    <style>
+      @font-face {
+        font-family: "Source Sans 3";
+        src: url("../../fonts/source-sans-3-variable.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 200 900;
+      }
+      @font-face {
+        font-family: "Source Serif 4";
+        src: url("../../fonts/source-serif-4-variable.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 200 900;
+      }
+      @font-face {
+        font-family: "Fira Code";
+        src: url("../../fonts/fira-code-variable.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 300 700;
+      }
+      :root { color-scheme: light dark; }
+      text { fill: light-dark(#172033, #f1f5f9); font-family: "Source Sans 3", ui-sans-serif, system-ui, sans-serif; }
+      .title { font-family: "Source Serif 4", ui-serif, Georgia, serif; font-size: 26px; font-weight: 600; }
+      .subtitle, .detail, .index { fill: light-dark(#526077, #a9b6c8); }
+      .subtitle { font-size: 18px; }
+      .method { font-family: "Fira Code", "SFMono-Regular", Consolas, monospace; font-size: 18px; }
+      .detail { font-size: 17px; }
+      .token { font-family: "Fira Code", "SFMono-Regular", Consolas, monospace; font-size: 18px; }
+      .index { font-family: "Fira Code", "SFMono-Regular", Consolas, monospace; font-size: 16px; }
+      .cell { fill: light-dark(#ffffff, #111827); stroke: light-dark(#98a4b7, #64748b); stroke-width: 1.5; }
+      .boundary { stroke: light-dark(#d7dce4, #344155); stroke-width: 1; stroke-dasharray: 3 5; }
+      .outer { fill: light-dark(#e8f6ff, #123d58); stroke: light-dark(#087fb8, #58c8ff); }
+      .nested { fill: light-dark(#edf8ef, #183f2b); stroke: light-dark(#27834a, #62d38b); }
+      .consume { fill: light-dark(#fff4d6, #4b3510); stroke: light-dark(#a66d00, #f5c451); }
+      .span { stroke-width: 2; rx: 4; }
+      .brace { fill: none; stroke: light-dark(#087fb8, #58c8ff); stroke-width: 2; }
+    </style>
+  </defs>
+
+  <text x="28" y="34" class="title">A parse method can consume a whole subexpression</text>
+  <text x="28" y="58" class="subtitle">At each level there is one shared position; recursive calls perform the individual moves.</text>
+
+  <text x="28" y="108" class="method">tokens</text>
+  <g>
+    <text x="480" y="88" class="index" text-anchor="middle">0</text>
+    <text x="600" y="88" class="index" text-anchor="middle">1</text>
+    <text x="720" y="88" class="index" text-anchor="middle">2</text>
+    <text x="840" y="88" class="index" text-anchor="middle">3</text>
+    <text x="960" y="88" class="index" text-anchor="middle">4</text>
+    <text x="1080" y="88" class="index" text-anchor="middle">5</text>
+    <rect x="420" y="96" width="120" height="48" rx="4" class="cell"/>
+    <rect x="540" y="96" width="120" height="48" rx="4" class="cell"/>
+    <rect x="660" y="96" width="120" height="48" rx="4" class="cell"/>
+    <rect x="780" y="96" width="120" height="48" rx="4" class="cell"/>
+    <rect x="900" y="96" width="120" height="48" rx="4" class="cell"/>
+    <rect x="1020" y="96" width="120" height="48" rx="4" class="cell"/>
+    <text x="480" y="126" class="token" text-anchor="middle">1</text>
+    <text x="600" y="126" class="token" text-anchor="middle">+</text>
+    <text x="720" y="126" class="token" text-anchor="middle">2</text>
+    <text x="840" y="126" class="token" text-anchor="middle">*</text>
+    <text x="960" y="126" class="token" text-anchor="middle">price</text>
+    <text x="1080" y="126" class="token" text-anchor="middle">&lt;EOF&gt;</text>
+  </g>
+
+  <g>
+    <line x1="420" y1="154" x2="420" y2="638" class="boundary"/>
+    <line x1="540" y1="154" x2="540" y2="638" class="boundary"/>
+    <line x1="660" y1="154" x2="660" y2="638" class="boundary"/>
+    <line x1="780" y1="154" x2="780" y2="638" class="boundary"/>
+    <line x1="900" y1="154" x2="900" y2="638" class="boundary"/>
+    <line x1="1020" y1="154" x2="1020" y2="638" class="boundary"/>
+    <line x1="1140" y1="154" x2="1140" y2="638" class="boundary"/>
+  </g>
+
+  <text x="28" y="194" class="method">ParseAdditiveExpression()</text>
+  <text x="28" y="214" class="detail">caller observes position 0 → 5</text>
+  <rect x="420" y="177" width="600" height="42" class="span outer"/>
+  <text x="720" y="203" class="method" text-anchor="middle">build +(1, *(2, price))</text>
+
+  <text x="50" y="264" class="method">left =</text>
+  <text x="70" y="286" class="method">ParseMultiplicativeExpression()</text>
+  <rect x="420" y="248" width="120" height="38" class="span nested"/>
+  <text x="480" y="272" class="detail" text-anchor="middle">0 → 1</text>
+
+  <text x="50" y="334" class="method">Match(PlusToken)</text>
+  <rect x="540" y="308" width="120" height="38" class="span consume"/>
+  <text x="600" y="332" class="detail" text-anchor="middle">1 → 2</text>
+
+  <text x="50" y="384" class="method">right =</text>
+  <text x="70" y="406" class="method">ParseMultiplicativeExpression()</text>
+  <text x="70" y="428" class="detail">one call returns the complete * subtree</text>
+  <rect x="660" y="368" width="360" height="50" class="span nested"/>
+  <text x="840" y="398" class="method" text-anchor="middle">position 2 → 5</text>
+
+  <text x="86" y="464" class="method">ParseUnaryExpression()</text>
+  <text x="106" y="486" class="method">→ Expect(NumberToken)</text>
+  <rect x="660" y="448" width="120" height="38" class="span consume"/>
+  <text x="720" y="472" class="detail" text-anchor="middle">2 → 3</text>
+
+  <text x="86" y="534" class="method">Match(StarToken)</text>
+  <rect x="780" y="508" width="120" height="38" class="span consume"/>
+  <text x="840" y="532" class="detail" text-anchor="middle">3 → 4</text>
+
+  <text x="86" y="584" class="method">ParseUnaryExpression()</text>
+  <text x="106" y="606" class="method">→ Expect(IdentifierToken)</text>
+  <rect x="900" y="568" width="120" height="38" class="span consume"/>
+  <text x="960" y="592" class="detail" text-anchor="middle">4 → 5</text>
+
+  <path d="M 660 630 L 660 644 L 1020 644 L 1020 630" class="brace"/>
+  <text x="840" y="671" class="method" text-anchor="middle">three nested Consume calls, one token each</text>
+  <text x="840" y="694" class="detail" text-anchor="middle">The recursive method call hides these smaller cursor movements from its caller.</text>
+</svg>
