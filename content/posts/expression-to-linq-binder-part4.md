@@ -2,7 +2,7 @@
 title = "From Filter Strings to LINQ (Part IV)"
 description = "Bind the parsed syntax tree to .NET properties, build a typed LINQ expression tree, and connect the complete Linde compilation pipeline."
 date = "2026-09-25"
-draft = true
+draft = false
 tags = ["c#", "parser", "linq", "dotnet"]
 math = true
 +++
@@ -515,13 +515,6 @@ The query selects the two books that cost more than 130 and are in stock:
 Product { Name = The Pragmatic Programmer, Category = Books, Price = 135, InStock = True }
 Product { Name = Algorithms Handbook, Category = Books, Price = 145, InStock = True }
 ```
-
-There is one important boundary. `PredicateCompiler<T>` returns a `Func<T, bool>`, so this version
-targets in-memory `IEnumerable<T>` collections. An `IQueryable<T>` provider, such as an
-object-relational mapper, usually needs the uncompiled `Expression<Func<T, bool>>` so that it can
-translate the tree into another query language. The binder already produces that tree, so exposing
-it would be a small API change. Whether a particular provider supports every generated node is a
-separate question.
 
 ## What We Built
 
